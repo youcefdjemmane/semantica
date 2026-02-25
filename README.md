@@ -32,6 +32,10 @@ Tauri uses the Microsoft C++ Build Tools for development as well as Microsoft Ed
 ```bash
 curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
 ```
+in a new terminal window install the cargo tauri cli :
+```bash
+cargo install tauri-cli --version "^2.0.0" --locked
+```
 ### Windows
 in Powershell (run as administrator)
 ```Powershell
