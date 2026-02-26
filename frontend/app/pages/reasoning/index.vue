@@ -4,7 +4,7 @@
 
 <template>
     <div>
-        Dashboard
+        Reason
     </div>
 
 </template>

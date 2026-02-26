@@ -4,7 +4,7 @@
 
 <template>
     <div>
-        Dashboard
+        Sparql
     </div>
 
 </template>
