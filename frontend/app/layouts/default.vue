@@ -1,5 +1,6 @@
 <script setup lang="ts">
-
+const route = useRoute()
+const pageName: string| unknown = route.meta.title
 </script>
 
 <template>
@@ -7,7 +8,8 @@
         <AppSidebar />
         <main class="w-full">
             <nav class="flex justify-between items-center p-4 w-full border-b">
-                <SidebarTrigger />
+                <SidebarTrigger :title="pageName" />
+                
                 <ModeToggle />
 
             </nav>
