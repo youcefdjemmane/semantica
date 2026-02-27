@@ -17,9 +17,18 @@ export const badgeVariants = cva(
         outline:
           "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         rdf:
-          "border-transparent bg-secondary text-blue-600 [a&]:hover:bg-secondary/90",
+          "border-transparent bg-blue-200 text-gray-800 dark:bg-secondary dark:text-blue-200 ",
         ontology:
-          "border-transparent bg-secondary text-red-600 [a&]:hover:bg-secondary/90"
+          "border-transparent bg-red-200 text-gray-800 dark:bg-secondary dark:text-red-200",
+        select:
+          "border-transparent bg-green-200 text-slate-800 dark:bg-secondary dark:text-green-200 ",
+        ask:
+          "border-transparent bg-indigo-200 text-gray-800 dark:bg-secondary dark:text-indigo-200",
+        construct:
+          "border-transparent bg-red-200 text-gray-800 dark:bg-secondary dark:text-red-200",
+        describe:
+          "border-transparent bg-yellow-200 text-gray-600 dark:bg-secondary dark:text-yellow-200",
+          
       },
     },
     defaultVariants: {
