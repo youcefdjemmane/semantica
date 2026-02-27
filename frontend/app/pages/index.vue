@@ -5,6 +5,8 @@ import type { LoadedFile } from '~/types/loaded_files';
 import NamespaceDistDonut from '~/components/dashboard/NamespaceDistDonut.vue';
 import TopPredicatesBar from '~/components/dashboard/TopPredicatesBar.vue';
 import TripleDistributionPie from '~/components/dashboard/TripleDistributionPie.vue';
+import ReasoningEngine from '~/components/dashboard/ReasoningEngine.vue';
+import OntologyOverview from '~/components/dashboard/OntologyOverview.vue';
 
 definePageMeta({
     title: 'Dashboard',
@@ -76,63 +78,9 @@ const files: LoadedFile[] = [
 
         <!-- ROW 3 — Ontology + Reasoning -->
         <div class="grid grid-cols-2 gap-4">
-            <div class=" rounded-xl p-4 shadow-sm border ">
-                <p class="text-sm font-semibold text-gray-700 dark:text-gray-100 mb-3">Ontology Overview</p>
-                <div class="space-y-2">
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-500">Classes</span>
-                        <span class="font-medium text-gray-800 dark:text-gray-100">12</span>
-                    </div>
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-500">Object Properties</span>
-                        <span class="font-medium text-gray-800 dark:text-gray-100">8</span>
-                    </div>
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-500">Data Properties</span>
-                        <span class="font-medium text-gray-800 dark:text-gray-100">5</span>
-                    </div>
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-500">Individuals</span>
-                        <span class="font-medium text-gray-800 dark:text-gray-100">34</span>
-                    </div>
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-500">Max Depth</span>
-                        <span class="font-medium text-gray-800 dark:text-gray-100">4</span>
-                    </div>
-                </div>
-                <NuxtLink to="/ontology"
-                    class="mt-4 inline-block text-xs text-indigo-500 hover:text-indigo-700 font-medium">
-                    View Hierarchy →
-                </NuxtLink>
-            </div>
+           <OntologyOverview />
 
-            <div class=" rounded-xl p-4 shadow-sm border ">
-                <p class="text-sm font-semibold text-gray-700 dark:text-gray-100 mb-3">Reasoning Engine</p>
-                <div class="space-y-2">
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-500">Status</span>
-                        <span class="font-medium text-red-400">OFF</span>
-                    </div>
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-500">Formalism</span>
-                        <span class="font-medium text-gray-400">—</span>
-                    </div>
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-500">Inferred Triples</span>
-                        <span class="font-medium text-gray-800 dark:text-gray-100">0</span>
-                    </div>
-                </div>
-                <div class="mt-4 flex gap-2">
-                    <button
-                        class="text-xs bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded-lg font-medium transition-colors">
-                        Enable Reasoning
-                    </button>
-                    <NuxtLink to="/reasoning"
-                        class="text-xs text-indigo-500 hover:text-indigo-700 font-medium flex items-center">
-                        Go to Reasoning →
-                    </NuxtLink>
-                </div>
-            </div>
+            <ReasoningEngine />
         </div>
 
         <!-- ROW 4 — Loaded Files -->
