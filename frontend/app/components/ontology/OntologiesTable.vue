@@ -16,7 +16,7 @@ const props = defineProps({
         type: Array,
         default: () => [
             {
-                id: 'id1',
+                id: '1',
                 name: 'ontolody.owl',
                 format: 'OWL',
                 classes: '32',
@@ -153,7 +153,7 @@ const visiblePages = computed(() => {
                         {{ ontology[col.key] ?? '—' }}
                     </TableCell>
                     <TableCell class="text-right  space-x-2 justify-end">
-                        <NuxtLink :to="'/ontologies/'+ ontology.id">
+                        <NuxtLink :to="`/ontology/${ontology.id}`">
                             <Button>
                                 <Eye />
                                 Show
