@@ -5,7 +5,13 @@ __pycache__/
 
 # C extensions
 *.so
+app/storage/database/*
+app/storage/files/graphs/*
+app/storage/files/ontologies/*
 
+!app/storage/database/.gitkeep
+!app/storage/files/ontologies/.gitkeep
+!app/storage/files/graphs/.gitkeep
 # Distribution / packaging
 .Python
 build/
