@@ -15,10 +15,12 @@ definePageMeta({
             <KpiCard title="Total Properties" data="231"/>
             <KpiCard title="Total Individuals" data="410"/>
             <KpiCard title="Formats Used">
-                <div class="space-x-2 space-y-1">
+                <template #content>
+                    <CardContent class="space-x-2 space-y-1">
                     <Badge>Owl</Badge>
                     <Badge>RDFS</Badge>
-                </div>
+                </CardContent>
+                </template>
             </KpiCard>
         </div>
         <OntologiesTable/>

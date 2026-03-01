@@ -18,14 +18,17 @@ definePageMeta({
             <KpiCard title="Total triples" data="124" />
             <KpiCard title="Total Size" data="50Mb" />
             <KpiCard title="Formats used">
-                <div class="space-x-2 space-y-1">
-                    <Badge>Turtle</Badge>
-                    <Badge>Turtle</Badge>
-                    <Badge>Turtle</Badge>
-                    <Badge>XML</Badge>
-                    <Badge>N-triples</Badge>
-                    <Badge>N-triples</Badge>
-                </div>
+                 <template #content>
+
+                     <CardContent class="space-x-2 space-y-1">
+                         <Badge>Turtle</Badge>
+                         <Badge>Turtle</Badge>
+                         <Badge>Turtle</Badge>
+                         <Badge>XML</Badge>
+                         <Badge>N-triples</Badge>
+                         <Badge>N-triples</Badge>
+                        </CardContent>
+                    </template>
             </KpiCard>
         </div>
         <div class="w-full">
