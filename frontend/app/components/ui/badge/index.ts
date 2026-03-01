@@ -28,7 +28,11 @@ export const badgeVariants = cva(
           "border-transparent bg-red-200 text-gray-800 dark:bg-secondary dark:text-red-200",
         describe:
           "border-transparent bg-yellow-200 text-gray-600 dark:bg-secondary dark:text-yellow-200",
-          
+        active:
+          "border-transparent bg-green-200 text-slate-800 dark:bg-secondary dark:text-green-200",
+        inactive:
+          "border-transparent bg-red-200 text-gray-800 dark:bg-secondary dark:text-red-200",
+
       },
     },
     defaultVariants: {

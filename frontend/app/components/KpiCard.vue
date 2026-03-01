@@ -17,10 +17,8 @@ defineProps<{
         <CardContent v-if="data"  :class=" data === '0' ? 'text-indigo-500':  'text-slate-800  dark:text-gray-100'" >
             <p class="text-3xl font-semibold">{{ data }}</p>
         </CardContent>
-        <CardContent v-else>
-            <slot />
-        </CardContent>
-        <CardFooter class="text-xs text-gray-400 mt-1">{{ footer }}</CardFooter>
-        
+        <slot name="content" />
+        <CardFooter v-if="footer" class="text-xs text-gray-400 mt-1">{{ footer }}</CardFooter>
+        <slot name="footer" />
     </Card>
 </template>
