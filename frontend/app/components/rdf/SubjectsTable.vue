@@ -1,0 +1,85 @@
+<script setup lang="ts">
+</script>
+
+<template>
+
+    <Table>
+        <TableHeader>
+            <TableRow>
+                <TableHead>URI</TableHead>
+                <TableHead>Prefix form</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Predicates count</TableHead>
+            </TableRow>
+        </TableHeader>
+          <TableBody>
+            <TableRow>
+                <TableCell>http://xmlns.com/foaf/0.1/John</TableCell>
+                <TableCell>foaf:John</TableCell>
+                <TableCell>foaf:Person</TableCell>
+                <TableCell>4</TableCell>
+            </TableRow>
+            <TableRow>
+                <TableCell>http://xmlns.com/foaf/0.1/John</TableCell>
+                <TableCell>foaf:John</TableCell>
+                <TableCell>foaf:Person</TableCell>
+                <TableCell>4</TableCell>
+            </TableRow>
+            <TableRow>
+                <TableCell>http://xmlns.com/foaf/0.1/John</TableCell>
+                <TableCell>foaf:John</TableCell>
+                <TableCell>foaf:Person</TableCell>
+                <TableCell>4</TableCell>
+            </TableRow>
+              <TableRow>
+                <TableCell>http://xmlns.com/foaf/0.1/John</TableCell>
+                <TableCell>foaf:John</TableCell>
+                <TableCell>foaf:Person</TableCell>
+                <TableCell>4</TableCell>
+            </TableRow>
+              <TableRow>
+                <TableCell>http://xmlns.com/foaf/0.1/John</TableCell>
+                <TableCell>foaf:John</TableCell>
+                <TableCell>foaf:Person</TableCell>
+                <TableCell>4</TableCell>
+            </TableRow>
+              <TableRow>
+                <TableCell>http://xmlns.com/foaf/0.1/John</TableCell>
+                <TableCell>foaf:John</TableCell>
+                <TableCell>foaf:Person</TableCell>
+                <TableCell>4</TableCell>
+            </TableRow>
+              <TableRow>
+                <TableCell>http://xmlns.com/foaf/0.1/John</TableCell>
+                <TableCell>foaf:John</TableCell>
+                <TableCell>foaf:Person</TableCell>
+                <TableCell>4</TableCell>
+            </TableRow>
+              <TableRow>
+                <TableCell>http://xmlns.com/foaf/0.1/John</TableCell>
+                <TableCell>foaf:John</TableCell>
+                <TableCell>foaf:Person</TableCell>
+                <TableCell>4</TableCell>
+            </TableRow>
+              <TableRow>
+                <TableCell>http://xmlns.com/foaf/0.1/John</TableCell>
+                <TableCell>foaf:John</TableCell>
+                <TableCell>foaf:Person</TableCell>
+                <TableCell>4</TableCell>
+            </TableRow>
+              <TableRow>
+                <TableCell>http://xmlns.com/foaf/0.1/John</TableCell>
+                <TableCell>foaf:John</TableCell>
+                <TableCell>foaf:Person</TableCell>
+                <TableCell>4</TableCell>
+            </TableRow>
+              <TableRow>
+                <TableCell>http://xmlns.com/foaf/0.1/John</TableCell>
+                <TableCell>foaf:John</TableCell>
+                <TableCell>foaf:Person</TableCell>
+                <TableCell>4</TableCell>
+            </TableRow>
+            
+          </TableBody>
+    </Table>
+</template>
