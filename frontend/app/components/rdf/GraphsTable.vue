@@ -68,7 +68,9 @@ const columns = [
     { key: 'uploaded',  label: 'Uploaded' },
     { key: 'status',    label: 'Status' },
 ]
-
+const filteredColumns = computed(() =>
+    columns.filter(col => col.key !== 'status')
+)
 function toggleSort(key) {
     if (sortKey.value === key) {
         sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
@@ -175,8 +177,13 @@ const visiblePages = computed(() => {
                     </TableCell>
                 </TableRow>
                 <TableRow v-for="graph in paginatedGraphs" :key="graph.id ?? graph.name">
-                    <TableCell v-for="col in columns" :key="col.key">
+                    <TableCell v-for="col in filteredColumns" :key="col.key">
                         {{ graph[col.key] ?? '—' }}
+                    </TableCell>
+                    <TableCell>
+                        <Badge :variant="graph.status === 'active' ? 'select' : 'destructive'">
+                            {{ graph.status }}
+                        </Badge>
                     </TableCell>
                     <TableCell class="text-right  space-x-2 justify-end">
                         <NuxtLink :to="'/rdf/'+ graph.id">

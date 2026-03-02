@@ -53,7 +53,9 @@ const columns = [
     { key: 'uploaded', label: 'Uploaded' },
     { key: 'status', label: 'Status' },
 ]
-
+const filteredColumns = computed(() =>
+    columns.filter(col => col.key !== 'status')
+)
 function toggleSort(key) {
     if (sortKey.value === key) {
         sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
@@ -144,16 +146,21 @@ const visiblePages = computed(() => {
             </TableHeader>
             <TableBody>
                 <TableRow v-if="paginatedOntologies.length === 0">
-                    <TableCell :colspan="columns.length + 1" class="text-center text-muted-foreground py-8">
+                    <TableCell :colspan="filteredColumns.length + 1" class="text-center text-muted-foreground py-8">
                         No ontologies loaded yet.
                     </TableCell>
                 </TableRow>
                 <TableRow v-for="ontology in paginatedOntologies" :key="ontology.id ?? ontology.name">
-                    <TableCell v-for="col in columns" :key="col.key">
-                        {{ ontology[col.key] ?? '—' }}
-                    </TableCell>
+                        <TableCell v-for="col in filteredColumns" :key="col.key">
+                            {{ ontology[col.key] ?? '—' }}
+                        </TableCell>
+                        <TableCell>
+                            <Badge :variant="ontology.status === 'active' ? 'select' : 'destructive'">
+                                {{ ontology.status }}
+                            </Badge>
+                        </TableCell>
                     <TableCell class="text-right  space-x-2 justify-end">
-                        <NuxtLink :to="`/ontology/${ontology.id}`">
+                        <NuxtLink :to="ontology.format === 'OWL' ? `/ontology/owl/${ontology.id}` : `/ontology/rdfs/${ontology.id}`">
                             <Button>
                                 <Eye />
                                 Show
