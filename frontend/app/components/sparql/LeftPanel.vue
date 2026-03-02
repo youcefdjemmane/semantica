@@ -88,6 +88,9 @@ function loadFromHistory(h) { query.value = h.query }
           <Button @click="clearEditor" variant="outline" size="sm">
             <Eraser class="w-3 h-3 mr-1" /> Clear
           </Button>
+          <Button   size="sm">
+            <Play class="w-3 h-3 mr-1" /> Run
+          </Button>
         </div>
       </CardHeader>
       <CardContent class="flex-1 overflow-auto">

@@ -1,18 +1,105 @@
 <script setup>
 import { Download, Settings } from 'lucide-vue-next';
 
+// Replace your results ref with this
 const results = ref({
-    type: 'ASK',
-    result: 'FALSE',
-    execution_time: 1000
+    type: 'CONSTRUCT',
+    triple_count: 8,
+    execution_time: 243,
+    elements: [
+
+
+    
+        { data: { id: 'ex:John',         label: 'John',         type: 'uri'     } },
+        { data: { id: 'ex:Jane',         label: 'Jane',         type: 'uri'     } },
+        { data: { id: 'ex:ACME',         label: 'ACME Corp',    type: 'uri'     } },
+        { data: { id: 'foaf:Person',     label: 'Person',       type: 'uri'     } },
+        { data: { id: 'foaf:Organization', label: 'Organization', type: 'uri'   } },
+        { data: { id: '"John Doe"',      label: 'John Doe',     type: 'literal' } },
+        { data: { id: '"30"',            label: '30',           type: 'literal' } },
+
+        { data: { source: 'ex:John',  target: 'foaf:Person',      label: 'rdf:type'   } },
+        { data: { source: 'ex:Jane',  target: 'foaf:Person',      label: 'rdf:type'   } },
+        { data: { source: 'ex:ACME',  target: 'foaf:Organization', label: 'rdf:type'  } },
+        { data: { source: 'ex:John',  target: 'ex:Jane',           label: 'foaf:knows' } },
+        { data: { source: 'ex:John',  target: 'ex:ACME',           label: 'foaf:member' } },
+        { data: { source: 'ex:John',  target: '"John Doe"',        label: 'foaf:name'  } },
+        { data: { source: 'ex:John',  target: '"30"',              label: 'foaf:age'   } },
+        { data: { source: 'ex:Jane',  target: 'ex:ACME',           label: 'foaf:member' } },
+    ]
 })
 const error = ref(null)
 const running = ref(false)
 const history = ref([])
+
+import cytoscape from 'cytoscape'
+
+const constructGraph = ref(null)
+let cyInstance = null
+watch(
+    () => results.value,
+    async (val) => {
+        if (val?.type !== 'CONSTRUCT') return
+        await nextTick()
+        if (!constructGraph.value) return
+
+        // destroy previous instance if any
+        if (cyInstance) { cyInstance.destroy(); cyInstance = null }
+
+        cyInstance = cytoscape({
+            container: constructGraph.value,
+            elements:  val.elements,
+            style: [
+                {
+                    selector: 'node[type = "uri"]',
+                    style: {
+                        'background-color':  '#6366f1',
+                        'label':             'data(label)',
+                        'color':             '#fff',
+                        'font-size':         '10px',
+                        'text-valign':       'center',
+                        'text-halign':       'center',
+                        'width':             '60px',
+                        'height':            '60px',
+                    }
+                },
+                {
+                    selector: 'node[type = "literal"]',
+                    style: {
+                        'background-color':  '#f59e0b',
+                        'label':             'data(label)',
+                        'color':             '#fff',
+                        'font-size':         '9px',
+                        'text-valign':       'center',
+                        'shape':             'rectangle',
+                        'width':             '70px',
+                        'height':            '30px',
+                    }
+                },
+                {
+                    selector: 'edge',
+                    style: {
+                        'label':                  'data(label)',
+                        'curve-style':            'bezier',
+                        'target-arrow-shape':     'triangle',
+                        'font-size':              '8px',
+                        'line-color':             '#94a3b8',
+                        'target-arrow-color':     '#94a3b8',
+                        'text-background-color':  '#ffffff',
+                        'text-background-opacity': 1,
+                        'text-background-padding': '2px',
+                    }
+                }
+            ],
+            layout: { name: 'cose', padding: 30, animate: false }
+        })
+    },
+    { immediate: true }
+)
 </script>
 
 <template>
-    <Card class="w-[50%] h-[89vh]    rounded-xl   flex flex-col overflow-hidden">
+    <Card class="w-[50%] h-[89vh]    rounded-xl justify-between  flex flex-col overflow-hidden">
 
         <!-- Results Header -->
         <CardHeader class="flex flex-row  items-center justify-between    ">
@@ -31,7 +118,7 @@ const history = ref([])
         </CardHeader>
 
         <!-- Results Body -->
-        <CardContent class="flex-1 overflow-auto p-6">
+        <CardContent class=" overflow-auto w-full h-full p-2">
 
             <!-- Empty state -->
             <div v-if="!results && !running && !error"
