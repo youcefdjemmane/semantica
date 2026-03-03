@@ -70,7 +70,7 @@ function loadFromHistory(h) { query.value = h.query }
 </script>
 
 <template>
-  <div class="w-[50%] h-[89vh] overflow-auto flex flex-col gap-3 ">
+  <div class="w-[50%] h-[98vh] overflow-auto flex flex-col gap-3 ">
 
     <!-- Query Templat  es -->
 

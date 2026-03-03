@@ -90,7 +90,7 @@ function restrictionLabel(r: any): string {
 </script>
 
 <template>
-    <div class="p-6 space-y-6">
+    <div class="p-2 space-y-6">
 
         <Card class="flex flex-row px-5 justify-between items-center">
             <div class="flex flex-col gap-0.5">

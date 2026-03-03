@@ -98,7 +98,7 @@ watch(
 </script>
 
 <template>
-    <Card class="w-[50%] h-[89vh]    rounded-xl justify-between  flex flex-col overflow-hidden">
+    <Card class="w-[50%] h-[98vh]    rounded-xl justify-between  flex flex-col overflow-hidden">
 
         <!-- Results Header -->
         <CardHeader class="flex flex-row  items-center justify-between    ">
@@ -174,7 +174,7 @@ watch(
             <!-- CONSTRUCT → Mini Cytoscape Graph -->
             <div v-if="results?.type === 'CONSTRUCT' && !running" class="h-full flex flex-col gap-2">
                 <p class="text-xs text-gray-400">{{ results.triple_count }} triples constructed</p>
-                <div ref="constructGraph" class="flex-1 rounded-xl border  "></div>
+                <div ref="constructGraph" class="flex-1 rounded-xl   "></div>
             </div>
 
         </CardContent>

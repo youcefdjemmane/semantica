@@ -39,11 +39,16 @@ const items = [
     url: '/reasoning',
     icon: Brain,
   },
+  {
+    title:'Settings',
+    url: '/settings',
+    icon: Settings,
+  }
 ]
 </script>
 
 <template>
-  <Sidebar variant="floating" collapsible="icon">
+  <Sidebar variant="floating">
     <SidebarContent>
       <SidebarGroup>
         <SidebarGroupLabel>Application</SidebarGroupLabel>

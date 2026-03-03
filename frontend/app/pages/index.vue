@@ -58,7 +58,7 @@ const files: LoadedFile[] = [
 
 
 <template>
-    <div class="p-6 space-y-4">
+    <div class="p-2 space-y-4">
 
         <!-- ROW 1 — KPI Cards -->
         <div class="grid grid-cols-5 gap-4">

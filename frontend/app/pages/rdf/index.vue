@@ -12,7 +12,7 @@ definePageMeta({
 </script>
 
 <template>
-    <div class="p-6 space-y-6">
+    <div class="p-2 space-y-6">
         <div class="grid grid-cols-4 gap-4">
             <KpiCard title="Total graphs" data="5" />
             <KpiCard title="Total triples" data="124" />
