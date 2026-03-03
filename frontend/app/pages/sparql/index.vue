@@ -12,7 +12,7 @@ definePageMeta({
 </script>
 
 <template>  
-   <div class="flex items-start  gap-4 p-6 flex-1 min-h-0">
+   <div class="flex items-start  gap-4 p-2 flex-1 min-h-0">
       <!-- LEFT PANEL -->
       <LeftPanel />
 

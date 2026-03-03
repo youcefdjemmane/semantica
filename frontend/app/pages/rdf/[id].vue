@@ -17,7 +17,7 @@ function toggleActive() {
 </script>
 
 <template>
-    <div class="p-6 space-y-6">
+    <div class="p-2 space-y-6">
         <Card class="flex flex-row px-5  justify-between items-center">
             <CardTitle>
                 Graph name (file.ttl)
