@@ -1,21 +1,25 @@
-from typing import Optional
+from typing import Optional,List,TYPE_CHECKING
 from datetime import datetime
-from sqlmodel import SQLModel, Field
+import uuid
+from sqlmodel import SQLModel, Field, Relationship
+from app.models.query_ontology import QueryOntology
+
+if TYPE_CHECKING:
+    from app.models.ontology import Ontology
+    from app.models.rdf import Graph
 
 
-class SPARQLHistory(SQLModel, table=True):
+
+class SparqlHistory(SQLModel, table=True):
     __tablename__ = "sparql_history"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
-    query: str
-    query_type: str
-    graph_id: Optional[int] = Field(default=None, foreign_key="graphs.id")
-    executed_at: datetime = Field(default_factory=datetime.utcnow)
+    id: uuid.UUID           = Field(default_factory=uuid.uuid4, primary_key=True)
+    query: str              = Field(nullable=False)
+    query_type: str         = Field(nullable=False)
+    graph_id: uuid.UUID     = Field(foreign_key="graphs.id", nullable=False)
+    executed_at: datetime   = Field(default_factory=datetime.utcnow)
+
+    graph: Optional["Graph"]  = Relationship(back_populates="sparql_history")
+    ontologies: List["Ontology"] = Relationship(back_populates="sparql_queries", link_model=QueryOntology)
 
 
-
-class QueryOntology(SQLModel, table=True):
-    __tablename__ = "query_ontologies"
-
-    query_id: int = Field(foreign_key="sparql_history.id", primary_key=True)
-    ontology_id: int = Field(foreign_key="ontologies.id", primary_key=True)

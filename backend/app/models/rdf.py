@@ -1,52 +1,69 @@
-from typing import Optional
+from sqlmodel import Field, Relationship, SQLModel
 from datetime import datetime
-from sqlmodel import SQLModel, Field
+from typing import List, Optional,TYPE_CHECKING
 
+import uuid
+
+if TYPE_CHECKING:
+    from app.models.sparql import SparqlHistory
 
 class Graph(SQLModel, table=True):
     __tablename__ = "graphs"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
-    name: str
-    format: str
-    file_name: str
-    file_path: str
-    file_size: int
-    triples_count: int
-    uploaded_at: datetime = Field(default_factory=datetime.utcnow)
+    id: uuid.UUID                   = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str                       = Field(nullable=False)
+    format: str                     = Field(nullable=False)
+    file_name: str                  = Field(nullable=False)
+    file_path: str                  = Field(nullable=False)
+    file_size: int                  = Field(nullable=False)
+    triples_count: int              = Field(nullable=False, default=0)
+    uploaded_at: datetime           = Field(nullable=False, default_factory=datetime.utcnow)
+
+    subjects:       List["Subject"]       = Relationship(back_populates="graph", cascade_delete=True)
+    predicates:     List["Predicate"]     = Relationship(back_populates="graph", cascade_delete=True)
+    objects:        List["Object"]        = Relationship(back_populates="graph", cascade_delete=True)
+    sparql_history: List["SparqlHistory"] = Relationship(back_populates="graph", cascade_delete=True)
 
 
 class Subject(SQLModel, table=True):
     __tablename__ = "subjects"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
-    graph_id: int = Field(foreign_key="graphs.id")
-    uri: str
-    prefix_form: Optional[str] = None
-    rdf_type: Optional[str] = None
-    predicate_count: int = 0
+    id: uuid.UUID              = Field(default_factory=uuid.uuid4, primary_key=True)
+    graph_id: uuid.UUID        = Field(foreign_key="graphs.id", nullable=False)
+    uri: str                   = Field(nullable=False)
+    prefix_form: Optional[str] = Field(default=None, nullable=True)
+    rdf_type: Optional[str]    = Field(default=None, nullable=True)
+    predicate_count: int       = Field(default=0)
+
+    graph: Optional[Graph]     = Relationship(back_populates="subjects")
 
 
 class Predicate(SQLModel, table=True):
     __tablename__ = "predicates"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
-    graph_id: int = Field(foreign_key="graphs.id")
-    uri: str
-    prefix_form: Optional[str] = None
-    usage_count: int = 0
-    domain: Optional[str] = None
-    range: Optional[str] = None
+    id: uuid.UUID              = Field(default_factory=uuid.uuid4, primary_key=True)
+    graph_id: uuid.UUID        = Field(foreign_key="graphs.id", nullable=False)
+    uri: str                   = Field(nullable=False)
+    prefix_form: Optional[str] = Field(default=None, nullable=True)
+    usage_count: int           = Field(default=0)
+    domain: Optional[str]      = Field(default=None, nullable=True)
+    range: Optional[str]       = Field(default=None, nullable=True)
+
+    graph: Optional[Graph]     = Relationship(back_populates="predicates")
 
 
-class RDFObject(SQLModel, table=True):
+class Object(SQLModel, table=True):
     __tablename__ = "objects"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
-    graph_id: int = Field(foreign_key="graphs.id")
-    value: str
-    kind: str                         # literal | uri | blank
-    prefix_form: Optional[str] = None
-    datatype: Optional[str] = None
-    language: Optional[str] = None
-    referenced_by: Optional[int] = None
+    id: uuid.UUID              = Field(default_factory=uuid.uuid4, primary_key=True)
+    graph_id: uuid.UUID        = Field(foreign_key="graphs.id", nullable=False)
+    value: str                 = Field(nullable=False)
+    kind: str                  = Field(nullable=False)
+    prefix_form: Optional[str] = Field(default=None, nullable=True)
+    datatype: Optional[str]    = Field(default=None, nullable=True)
+    language: Optional[str]    = Field(default=None, nullable=True)
+    referenced_by: int         = Field(default=0)
+
+    graph: Optional[Graph]     = Relationship(back_populates="objects")
+
+

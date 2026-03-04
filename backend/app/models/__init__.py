@@ -1,4 +1,4 @@
-from .rdf import Graph, Subject, Predicate, RDFObject
-from .ontolody import Ontology, OntologyClass, OntologyProperty, Individual
-from .sparql import SPARQLHistory, QueryOntology
-from .reasoning import ReasoningResult
+from .query_ontology import QueryOntology
+from .rdf import Graph, Subject, Predicate, Object
+from .sparql import SparqlHistory
+from .ontology import Ontology, Class, Property, Individual
