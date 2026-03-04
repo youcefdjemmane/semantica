@@ -1,33 +1,151 @@
-from fastapi import  File, UploadFile
-from fastapi import APIRouter
-from sqlmodel import select, delete, func, col
-from typing import Any, List
+from fastapi import File, HTTPException, UploadFile, Form, Depends, APIRouter
+from app.models.rdf import Graph, Subject, Predicate, Object
+from app.core.db import get_session
+from app.api.v1.helpers.rdf import _detect_rdf_format, _compute_graph_details
+from sqlmodel import Session, select, func
+from pathlib import Path
+from datetime import datetime
+import uuid
+import rdflib
 
 router = APIRouter(prefix="/rdf", tags=["rdf"])
-# request and response models will be available at app/models/rdf.py
 
-# global statistics 
-@router.get('/stats')
-def get_stats():
-    return 
-
-# get list of uploaded graph files
-@router.get('/files')
-def get_files():
-    return
+GRAPHS_STORAGE = Path(__file__).resolve().parent.parent.parent.parent / "storage" / "files" / "graphs"
 
 
-# get a specific graph file
-@router.get('/{file_id}')
-def get_file():
-    return
 
-# get a file's statistics
-@router.get('/{file_id}/stats')
-def get_file_stats():
-    return
+@router.get("/stats")
+def get_stats(session: Session = Depends(get_session)):
+    total_graphs    = session.exec(select(func.count()).select_from(Graph)).one()
+    total_triples   = session.exec(select(func.sum(Graph.triples_count))).one() or 0
+    total_subjects  = session.exec(select(func.count()).select_from(Subject)).one()
+    total_predicates= session.exec(select(func.count()).select_from(Predicate)).one()
+    total_objects   = session.exec(select(func.count()).select_from(Object)).one()
+    return {
+        "total_graphs":     total_graphs,
+        "total_triples":    total_triples,
+        "total_subjects":   total_subjects,
+        "total_predicates": total_predicates,
+        "total_objects":    total_objects,
+    }
 
-# delete graph file from storage and db
-@router.delete('/{file_id}')
-def delete_file():
-    return
+
+
+@router.get("/files")
+def get_files(session: Session = Depends(get_session)):
+    graphs = session.exec(select(Graph)).all()
+    return graphs
+
+
+
+@router.get("/{file_id}")
+def get_file(file_id: uuid.UUID, session: Session = Depends(get_session)):
+    graph = session.get(Graph, file_id)
+    if not graph:
+        raise HTTPException(status_code=404, detail="Graph not found.")
+    return graph
+
+
+
+@router.get("/{file_id}/stats")
+def get_file_stats(file_id: uuid.UUID, session: Session = Depends(get_session)):
+    graph = session.get(Graph, file_id)
+    if not graph:
+        raise HTTPException(status_code=404, detail="Graph not found.")
+
+    subjects_count  = session.exec(
+        select(func.count()).select_from(Subject).where(Subject.graph_id == file_id)
+    ).one()
+    predicates_count = session.exec(
+        select(func.count()).select_from(Predicate).where(Predicate.graph_id == file_id)
+    ).one()
+    objects_count   = session.exec(
+        select(func.count()).select_from(Object).where(Object.graph_id == file_id)
+    ).one()
+
+    return {
+        "graph_id":        str(graph.id),
+        "name":            graph.name,
+        "format":          graph.format,
+        "file_size":       graph.file_size,
+        "triples_count":   graph.triples_count,
+        "uploaded_at":     graph.uploaded_at,
+        "subjects_count":  subjects_count,
+        "predicates_count":predicates_count,
+        "objects_count":   objects_count,
+    }
+
+
+
+@router.delete("/{file_id}")
+def delete_file(file_id: uuid.UUID, session: Session = Depends(get_session)):
+    graph = session.get(Graph, file_id)
+    if not graph:
+        raise HTTPException(status_code=404, detail="Graph not found.")
+
+    # Remove file from disk
+    file_path = Path(graph.file_path)
+    if file_path.exists():
+        file_path.unlink()
+
+    # Cascade deletes 
+    session.delete(graph)
+    session.commit()
+    return {"detail": f"Graph '{graph.name}' deleted successfully."}
+
+
+
+@router.post("/upload")
+async def upload_graph(
+    name: str         = Form(...),
+    file: UploadFile  = File(...),
+    session: Session  = Depends(get_session),
+):
+    # 1. Read bytes
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+
+    # 2. Detect RDF format from filename / content-type
+    rdf_format = _detect_rdf_format(file.filename, file.content_type)
+
+    # 3. Parse with rdflib to validate and count triples
+    rdf_graph = rdflib.ConjunctiveGraph()
+    try:
+        rdf_graph.parse(data=content, format=rdf_format)
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=f"Failed to parse RDF file: {exc}")
+
+    triples_count = len(rdf_graph)
+
+    # 4. Save file to storage/files/graphs/<uuid>_<original_filename>
+    GRAPHS_STORAGE.mkdir(parents=True, exist_ok=True)
+    unique_filename = f"{uuid.uuid4()}_{Path(file.filename).name}"
+    dest_path = GRAPHS_STORAGE / unique_filename
+    dest_path.write_bytes(content)
+
+    # 5. Persist Graph row
+    db_graph = Graph(
+        name=name,
+        format=rdf_format,
+        file_name=file.filename,
+        file_path=str(dest_path),
+        file_size=len(content),
+        triples_count=triples_count,
+        uploaded_at=datetime.utcnow(),
+    )
+    session.add(db_graph)
+    session.flush()  # get db_graph.id without closing transaction
+
+    # 6. Compute and insert subjects / predicates / objects
+    _compute_graph_details(rdf_graph, db_graph, session)  # commits inside
+
+    return {
+        "id":            str(db_graph.id),
+        "name":          db_graph.name,
+        "format":        db_graph.format,
+        "file_name":     db_graph.file_name,
+        "file_size":     db_graph.file_size,
+        "triples_count": db_graph.triples_count,
+        "uploaded_at":   db_graph.uploaded_at,
+    }
