@@ -1,10 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.main import api_router
+from contextlib import asynccontextmanager
+from app.core.db import init_db
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
 
-app = FastAPI(title="Semantica API", version="0.1.0")
+app = FastAPI(title="Semantica API", version="0.1.0",lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -13,6 +19,7 @@ app.add_middleware(
         "http://localhost:3000",
         "http://localhost",
         "https://tauri.localhost",
+        "*"
     ],
     allow_credentials=True,
     allow_methods=["*"],
