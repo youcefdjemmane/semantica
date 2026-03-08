@@ -1,5 +1,5 @@
 use tauri::{AppHandle, Manager, WebviewWindowBuilder, WebviewUrl};
-
+use tauri_plugin_shell::ShellExt;
 #[tauri::command]
 fn splash_screen(app: AppHandle) -> Result<(), String> {
     if let Some(splash) = app.get_webview_window("splashscreen") {
