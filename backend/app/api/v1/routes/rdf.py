@@ -1,7 +1,7 @@
 from fastapi import File, HTTPException, UploadFile, Form, Depends, APIRouter
 from app.models.rdf import Graph, Subject, Predicate, Object
 from app.core.db import get_session
-from app.api.v1.helpers.rdf import _detect_rdf_format, _compute_graph_details
+from app.api.v1.helpers.rdf import _detect_rdf_format, _compute_graph_details, graph_to_cytoscape
 from sqlmodel import Session, select, func
 from pathlib import Path
 from datetime import datetime
@@ -148,4 +148,69 @@ async def upload_graph(
         "file_size":     db_graph.file_size,
         "triples_count": db_graph.triples_count,
         "uploaded_at":   db_graph.uploaded_at,
+    }
+
+
+
+@router.get("/{file_id}/elements")
+def get_file_stats(file_id: uuid.UUID, session: Session = Depends(get_session)):
+    graph = session.get(Graph, file_id)
+    if not graph:
+        raise HTTPException(status_code=404, detail="Graph not found.")
+
+    subjects  = session.exec(
+        select(Subject).select_from(Subject).where(Subject.graph_id == file_id)
+    ).all()
+    predicates = session.exec(
+        select(Predicate).select_from(Predicate).where(Predicate.graph_id == file_id)
+    ).all()
+    objects   = session.exec(
+        select(Object).select_from(Object).where(Object.graph_id == file_id)
+    ).all()
+
+    return {
+        "graph_id":        str(graph.id),
+        "subjects":        [s for s in subjects],
+        "predicates":      [p for p in predicates],
+        "objects":         [o for o in objects],
+    }
+
+
+@router.get("/{file_id}/visualise")
+def visualise_graph(
+    file_id: uuid.UUID,
+    limit:   int = 200,           # cap for large graphs
+    session: Session = Depends(get_session)
+):
+    graph = session.get(Graph, file_id)
+    if not graph:
+        raise HTTPException(status_code=404, detail="Graph not found.")
+
+    # Load file from disk into rdflib
+    rdf_graph = rdflib.ConjunctiveGraph()
+    try:
+        rdf_graph.parse(graph.file_path, format=graph.format)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to load graph: {exc}")
+
+    # Apply limit to avoid sending 10k nodes to frontend
+    if len(rdf_graph) > limit:
+        limited = rdflib.ConjunctiveGraph()
+        for i, triple in enumerate(rdf_graph):
+            if i >= limit:
+                break
+            limited.add(triple)
+        rdf_graph = limited
+
+    cyto = graph_to_cytoscape(rdf_graph)
+
+    return {
+        "meta" : {
+                    "graph_id":    str(file_id),
+                    "name":        graph.name,
+                    "node_count":  len(cyto["nodes"]),
+                    "edge_count":  len(cyto["edges"]),
+                    "truncated":   len(rdf_graph) >= limit,
+            },
+        "elements":    cyto["nodes"] + cyto["edges"]
     }
