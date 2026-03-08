@@ -197,3 +197,97 @@ def _compute_graph_details(
     )
 
     db.commit()
+
+from rdflib import Graph, URIRef, BNode, Literal
+
+def safe_label(g: Graph, uri) -> str:
+    """Get a human readable label for a URI"""
+    
+    # If it's a literal just return its string value
+    if isinstance(uri, Literal):
+        return str(uri)
+    
+    # If it's a blank node
+    if isinstance(uri, BNode):
+        return f"_:{str(uri)}"
+
+    # Try rdfs:label first
+    from rdflib import RDFS
+    label = g.value(uri, RDFS.label)
+    if label:
+        return str(label)
+
+    # Fall back to the local part of the URI
+    s = str(uri)
+    if "#" in s:
+        return s.split("#")[-1]
+    return s.split("/")[-1] or s
+
+
+def safe_qname(g: Graph, uri) -> str:
+    """Shorten a URI to prefix:localname form"""
+    
+    if isinstance(uri, Literal):
+        return str(uri)
+    
+    if isinstance(uri, BNode):
+        return f"_:{str(uri)}"
+
+    # rdflib has a built-in qname method but it throws
+    # if the namespace isn't registered, so we wrap it
+    try:
+        return g.qname(uri)
+    except Exception:
+        return safe_label(g, uri)
+
+
+def graph_to_cytoscape(rdf_graph: rdflib.ConjunctiveGraph) -> dict:
+    nodes = {}
+    edges = []
+
+    for subject, predicate, obj in rdf_graph:
+        # Subject node
+        s_id = str(subject)
+        if s_id not in nodes:
+            nodes[s_id] = {
+                "data": {
+                    "id":    s_id,
+                    "label": safe_label(rdf_graph, subject),
+                    "type":  "blank" if isinstance(subject, rdflib.BNode) else "uri"
+                }
+            }
+
+        # Object node
+        o_id = str(obj)
+        if isinstance(obj, rdflib.Literal):
+            node_id = f"lit_{hash(o_id + s_id)}"
+            if node_id not in nodes:
+                nodes[node_id] = {
+                    "data": {
+                        "id":    node_id,
+                        "label": str(obj)[:30],   # truncate long literals
+                        "type":  "literal"
+                    }
+                }
+            o_id = node_id
+        else:
+            if o_id not in nodes:
+                nodes[o_id] = {
+                    "data": {
+                        "id":    o_id,
+                        "label": safe_label(rdf_graph, obj),
+                        "type":  "blank" if isinstance(obj, rdflib.BNode) else "uri"
+                    }
+                }
+
+        # Edge
+        edges.append({
+            "data": {
+                "id":     f"{s_id}__{str(predicate)}__{o_id}",
+                "source": s_id,
+                "target": o_id,
+                "label":  safe_qname(rdf_graph, predicate)
+            }
+        })
+
+    return { "nodes": list(nodes.values()), "edges": edges }
