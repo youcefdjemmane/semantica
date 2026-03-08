@@ -1,29 +1,31 @@
 <script setup lang="ts">
+import type { Object } from '~/types/rdf';
+
+
+defineProps<{
+    objects: Object[]
+}>()
 </script>
 
 <template>
     
-    <Table>
+    <Table >
         <TableHeader>
             <TableRow>
-                <TableHead>Value</TableHead>
                 <TableHead>Kind</TableHead>
-                <TableHead>Datatype</TableHead>
-                <TableHead>Language tag</TableHead>
+                <TableHead>Value</TableHead>
+                <TableHead>Prefix form</TableHead>
+                <TableHead>language</TableHead>
+                <TableHead>DataType</TableHead>
             </TableRow>
         </TableHeader>
           <TableBody>
-            <TableRow>
-                <TableCell>foaf:John</TableCell>
-                <TableCell>URI</TableCell>
-                <TableCell></TableCell>
-                <TableCell></TableCell>
-            </TableRow>
-             <TableRow>
-                <TableCell>John Doe</TableCell>
-                <TableCell>Litteral</TableCell>
-                <TableCell>xsd:string</TableCell>
-                <TableCell>@en</TableCell>
+            <TableRow v-for="obj in objects" :key="obj.id">
+                <TableCell>{{ obj.kind }}</TableCell>
+                <TableCell>{{ obj.value }}</TableCell>
+                <TableCell>{{ obj.prefix_form }}</TableCell>
+                <TableCell>{{ obj.language }}</TableCell>
+                <TableCell>{{ obj.datatype }}</TableCell>
             </TableRow>
           </TableBody>
     </Table>

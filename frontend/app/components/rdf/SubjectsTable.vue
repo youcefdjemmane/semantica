@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import type { Subject } from '~/types/rdf'
+
+defineProps<{
+    subjects: Subject[]
+}>()
 </script>
 
 <template>
@@ -8,76 +13,16 @@
             <TableRow>
                 <TableHead>URI</TableHead>
                 <TableHead>Prefix form</TableHead>
-                <TableHead>Type</TableHead>
+                <TableHead>Rdf Type</TableHead>
                 <TableHead>Predicates count</TableHead>
             </TableRow>
         </TableHeader>
           <TableBody>
-            <TableRow>
-                <TableCell>http://xmlns.com/foaf/0.1/John</TableCell>
-                <TableCell>foaf:John</TableCell>
-                <TableCell>foaf:Person</TableCell>
-                <TableCell>4</TableCell>
-            </TableRow>
-            <TableRow>
-                <TableCell>http://xmlns.com/foaf/0.1/John</TableCell>
-                <TableCell>foaf:John</TableCell>
-                <TableCell>foaf:Person</TableCell>
-                <TableCell>4</TableCell>
-            </TableRow>
-            <TableRow>
-                <TableCell>http://xmlns.com/foaf/0.1/John</TableCell>
-                <TableCell>foaf:John</TableCell>
-                <TableCell>foaf:Person</TableCell>
-                <TableCell>4</TableCell>
-            </TableRow>
-              <TableRow>
-                <TableCell>http://xmlns.com/foaf/0.1/John</TableCell>
-                <TableCell>foaf:John</TableCell>
-                <TableCell>foaf:Person</TableCell>
-                <TableCell>4</TableCell>
-            </TableRow>
-              <TableRow>
-                <TableCell>http://xmlns.com/foaf/0.1/John</TableCell>
-                <TableCell>foaf:John</TableCell>
-                <TableCell>foaf:Person</TableCell>
-                <TableCell>4</TableCell>
-            </TableRow>
-              <TableRow>
-                <TableCell>http://xmlns.com/foaf/0.1/John</TableCell>
-                <TableCell>foaf:John</TableCell>
-                <TableCell>foaf:Person</TableCell>
-                <TableCell>4</TableCell>
-            </TableRow>
-              <TableRow>
-                <TableCell>http://xmlns.com/foaf/0.1/John</TableCell>
-                <TableCell>foaf:John</TableCell>
-                <TableCell>foaf:Person</TableCell>
-                <TableCell>4</TableCell>
-            </TableRow>
-              <TableRow>
-                <TableCell>http://xmlns.com/foaf/0.1/John</TableCell>
-                <TableCell>foaf:John</TableCell>
-                <TableCell>foaf:Person</TableCell>
-                <TableCell>4</TableCell>
-            </TableRow>
-              <TableRow>
-                <TableCell>http://xmlns.com/foaf/0.1/John</TableCell>
-                <TableCell>foaf:John</TableCell>
-                <TableCell>foaf:Person</TableCell>
-                <TableCell>4</TableCell>
-            </TableRow>
-              <TableRow>
-                <TableCell>http://xmlns.com/foaf/0.1/John</TableCell>
-                <TableCell>foaf:John</TableCell>
-                <TableCell>foaf:Person</TableCell>
-                <TableCell>4</TableCell>
-            </TableRow>
-              <TableRow>
-                <TableCell>http://xmlns.com/foaf/0.1/John</TableCell>
-                <TableCell>foaf:John</TableCell>
-                <TableCell>foaf:Person</TableCell>
-                <TableCell>4</TableCell>
+            <TableRow v-for="subject in subjects" :key="subject.id">
+                <TableCell>{{ subject.uri }}</TableCell>
+                <TableCell>{{ subject.prefix_form }}</TableCell>
+                <TableCell>{{ subject.rdf_type }}</TableCell>
+                <TableCell>{{ subject.predicate_count }}</TableCell>
             </TableRow>
             
           </TableBody>

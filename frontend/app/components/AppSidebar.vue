@@ -48,7 +48,7 @@ const items = [
 </script>
 
 <template>
-  <Sidebar variant="floating">
+  <Sidebar variant="floating" collapsible="icon">
     <SidebarContent>
       <SidebarGroup>
         <SidebarGroupLabel>Application</SidebarGroupLabel>

@@ -2,7 +2,7 @@
 
 defineProps<{
     title: string,
-    data?: string,
+    data?: any,
     footer?: unknown
 }>()
 </script>
@@ -12,7 +12,7 @@ defineProps<{
     <Card class="@container/card">
 
         <CardHeader>
-            <CardTitle>{{ title }}</CardTitle>
+            <p class="text-2xl">{{ title }}</p>
         </CardHeader>
         <CardContent v-if="data"  :class=" data === '0' ? 'text-indigo-500':  'text-slate-800  dark:text-gray-100'" >
             <p class="text-3xl font-semibold">{{ data }}</p>

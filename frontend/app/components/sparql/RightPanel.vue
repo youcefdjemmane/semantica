@@ -7,8 +7,6 @@ const results = ref({
     triple_count: 8,
     execution_time: 243,
     elements: [
-
-
         { data: { id: 'ex:John',         label: 'John',         type: 'uri'     } },
         { data: { id: 'ex:Jane',         label: 'Jane',         type: 'uri'     } },
         { data: { id: 'ex:ACME',         label: 'ACME Corp',    type: 'uri'     } },

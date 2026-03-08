@@ -14,45 +14,7 @@ import { CirclePlus, ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, Chevro
 const props = defineProps({
     graphs: {
         type: Array,
-        default: () => [
-            {
-                id:'id1',
-                name: 'rdf.ttl',
-                format: 'TTL',
-                triples: '32',
-                size: '50',
-                uploaded: '21-02-2026',
-                status: 'active'
-            },
-            {
-                id:'id2',
-                name: 'rdf.ttl',
-                format: 'TTL',
-                triples: '32',
-                size: '50',
-                uploaded: '20-02-2026',
-                status: 'active'
-            },
-            
-            {
-                id:'id3',
-                name: 'rdf.ttl',
-                format: 'TTL',
-                triples: '32',
-                size: '50',
-                uploaded: '20-02-2026',
-                status: 'active'
-            },
-            {
-                id:'id4',
-                name: 'rdf.ttl',
-                format: 'TTL',
-                triples: '32',
-                size: '50',
-                uploaded: '20-02-2026',
-                status: 'active'
-            }
-        ]
+        default: () => []
     }
 })
 
@@ -63,9 +25,9 @@ const sortOrder = ref('asc')
 const columns = [
     { key: 'name',      label: 'Name' },
     { key: 'format',    label: 'Format' },
-    { key: 'triples',   label: 'Triples' },
-    { key: 'size',      label: 'Size (Mb)' },
-    { key: 'uploaded',  label: 'Uploaded' },
+    { key: 'triples_count',   label: 'Triples' },
+    { key: 'file_size',      label: 'Size (Kb)' },
+    { key: 'uploaded_at',  label: 'Uploaded' },
     { key: 'status',    label: 'Status' },
 ]
 const filteredColumns = computed(() =>

@@ -1,8 +1,12 @@
 <script setup lang="ts">
+import type { Predicate } from '~/types/rdf'  
+defineProps<{
+    predicates: Predicate[]
+}>()
+
 </script>
 
 <template>
-    
     <Table>
         <TableHeader>
             <TableRow>
@@ -11,34 +15,15 @@
                 <TableHead>Usage count</TableHead>
                 <TableHead>Domain</TableHead>
                 <TableHead>Range</TableHead>
-                <!-- Object/ data -->
-                <TableHead>Type</TableHead>
             </TableRow>
         </TableHeader>
           <TableBody>
-            <TableRow>
-                <TableCell>http://xmlns.com/foaf/0.1/knows</TableCell>
-                <TableCell>foaf:knows</TableCell>
-                <TableCell>34</TableCell>
-                <TableCell>foaf:Person</TableCell>
-                <TableCell>foaf:Person</TableCell>
-                <TableCell>Object Property</TableCell>
-            </TableRow>
-            <TableRow>
-                <TableCell>http://xmlns.com/foaf/0.1/knows</TableCell>
-                <TableCell>foaf:knows</TableCell>
-                <TableCell>34</TableCell>
-                <TableCell>foaf:Person</TableCell>
-                <TableCell>foaf:Person</TableCell>
-                <TableCell>Data Property</TableCell>
-            </TableRow>
-            <TableRow>
-                <TableCell>http://xmlns.com/foaf/0.1/knows</TableCell>
-                <TableCell>foaf:knows</TableCell>
-                <TableCell>34</TableCell>
-                <TableCell>foaf:Person</TableCell>
-                <TableCell>foaf:Person</TableCell>
-                <TableCell>Object Property</TableCell>
+            <TableRow v-for="predicate in predicates" :key="predicate.id">
+                <TableCell>{{ predicate.uri }}</TableCell>
+                <TableCell>{{ predicate.prefix_form }}</TableCell>
+                <TableCell>{{ predicate.usage_count }}</TableCell>
+                <TableCell>{{ predicate.domain }}</TableCell>
+                <TableCell>{{ predicate.range }}</TableCell>
             </TableRow>
           </TableBody>
     </Table>
