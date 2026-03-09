@@ -12,31 +12,16 @@ const files = ref<any[]>([]);
 
 async function fetchStats() {
     try {
-        const { data, pending, error } = await useFetch<GraphsStats>(`${config.public.apiBase}/rdf/stats`)
-        
-        if (error.value) {
-            console.error('Error fetching graphs stats:', error.value);
-            return;
-        }
-        stats.value = data.value;
+        stats.value = await $fetch<GraphsStats>(`${config.public.apiBase}/rdf/stats`)
     } catch (error) {
-        console.error('Failed to fetch graphs stats:', error);
+        console.error('Failed to fetch graphs stats:', error)
     }
 }
-async function fetchFiles()
-{
+async function fetchFiles() {
     try {
-        const { data, pending, error } = await useFetch<any[]>(`${config.public.apiBase}/rdf/files`)
-        
-        if (error.value) {
-            console.error('Error fetching graphs files:', error.value);
-            return;
-        }
-        if (data.value) {
-             files.value = data.value;
-        }
+        files.value = await $fetch<any[]>(`${config.public.apiBase}/rdf/files`)
     } catch (error) {
-        console.error('Failed to fetch graphs files:', error);
+        console.error('Failed to fetch graphs files:', error)
     }
 }
 
@@ -48,31 +33,25 @@ onMounted(() => {
 definePageMeta({
     title: "RDF Graphs",
 })
-/**
- * {
-  "total_graphs": 1,
-  "total_triples": 59,
-  "total_subjects": 13,
-  "total_predicates": 37,
-  "total_objects": 54
+
+const refreshData = async () => {
+    await Promise.all([fetchStats(), fetchFiles()])
 }
- * 
- */
 
 </script>
 
 <template>
     <div class="p-2 space-y-6">
         <div class="grid grid-cols-5 gap-4">
-            <KpiCard title="Total graphs" :data="stats?.total_graphs || 0" />
-            <KpiCard title="Total triples" :data="stats?.total_triples || 0" />
-            <KpiCard title="Total subjects" :data="stats?.total_subjects || 0" />
-            <KpiCard title="Total predicates" :data="stats?.total_predicates ||0" />
-            <KpiCard title="Total objects" :data="stats?.total_objects || 0" />
+            <KpiCard title="Graphs" :data="stats?.total_graphs || '0'" />
+            <KpiCard title="Triples" :data="stats?.total_triples || '0'" />
+            <KpiCard title="Subjects" :data="stats?.total_subjects || '0'" />
+            <KpiCard title="Predicates" :data="stats?.total_predicates ||'0'" />
+            <KpiCard title="Objects" :data="stats?.total_objects || '0'" />
 
         </div>
         <div class="w-full">
-            <GraphsTable :graphs="files" />
+            <GraphsTable :graphs="files" @refresh="refreshData" />
         </div>
 
     </div>

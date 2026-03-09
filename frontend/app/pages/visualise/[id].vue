@@ -162,7 +162,7 @@ onBeforeUnmount(() => { cyInstance?.destroy() })
         <!-- HEADER -->
 
 
-        <div class="flex absolute bg-white z-10 right-5 top-1 border rounded-2xl p-5  items-center gap-3">
+        <Card class="flex absolute flex-row  z-10 right-5 top-1 p-5  items-center gap-3">
             <!-- Stats -->
             <div v-if="graphMeta" class="flex gap-2">
                 <Badge variant="secondary">{{ graphMeta.node_count }} nodes</Badge>
@@ -201,7 +201,7 @@ onBeforeUnmount(() => { cyInstance?.destroy() })
                     <RefreshCw class="w-4 h-4" />
                 </Button>
             </div>
-        </div>
+        </Card>
 
         <!-- LEGEND -->
         <div class="flex items-center gap-4 px-1 shrink-0">
