@@ -147,7 +147,7 @@ const handleError = () => {
                             {{ ontology[col.key] ?? '—' }}
                         </TableCell>
                     <TableCell class="text-right  space-x-2 justify-end">
-                        <NuxtLink :to="ontology.format === 'OWL' ? `/ontology/owl/${ontology.id}` : `/ontology/rdfs/${ontology.id}`">
+                        <NuxtLink :to="String(ontology.format).toLowerCase() == 'owl' ? `/ontology/owl/${ontology.id}` : `/ontology/rdfs/${ontology.id}`">
                             <Button>
                                 <Eye />
                                 Show

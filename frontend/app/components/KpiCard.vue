@@ -14,7 +14,7 @@ defineProps<{
         <CardHeader>
             <p class="text-2xl">{{ title }}</p>
         </CardHeader>
-        <CardContent v-if="data"  :class=" data === '0' ? 'text-indigo-500':  'text-slate-800  dark:text-gray-100'" >
+        <CardContent v-if="data"  :class=" data == '0' ? 'text-indigo-500':  'text-slate-800  dark:text-gray-100'" >
             <p class="text-3xl font-semibold">{{ data }}</p>
         </CardContent>
         <slot name="content" />
