@@ -1,97 +1,242 @@
 <script setup lang="ts">
 import KpiCard from '~/components/KpiCard.vue'
-import { ChevronsUpDown } from 'lucide-vue-next'
+import type { Ontology, OntologyFileStats } from '~/types/ontology'
+import cytoscape from 'cytoscape'
+import { useActiveOntologiesStore } from '~/store/active_ontology'
 
-const isActive = ref(false)
-function toggleActive() {
-    isActive.value = !isActive.value
-}
+const config = useRuntimeConfig()
+const id = useRoute().params.id
 
-const openStates = ref<Record<string, boolean>>({})
-function toggleClass(uri: string) {
-    openStates.value[uri] = !openStates.value[uri]
-}
-
-const search = ref('')
-
-// Replace with: const { data: onto } = await useFetch(`/api/owl/${route.params.id}`)
-const onto = ref({
-    name: 'foaf.owl',
-    class_count: 3,
-    object_property_count: 4,
-    data_property_count: 3,
-    individual_count: 5,
-    classes: [
-        {
-            uri: 'foaf:Person',
-            label: 'Person',
-            prefix_form: 'foaf:Person',
-            comment: 'A person.',
-            parents: ['foaf:Agent'],
-            children: [],
-            equivalent_classes: ['schema:Person'],
-            disjoint_classes: ['foaf:Document'],
-            union_of: [],
-            intersection_of: [],
-            object_properties: [
-                { label: 'knows',  range: 'foaf:Person' },
-                { label: 'member', range: 'foaf:Organization' },
-            ],
-            data_properties: [
-                { label: 'name', range: 'xsd:string'  },
-                { label: 'age',  range: 'xsd:integer' },
-            ],
-            restrictions: [
-                { property: 'foaf:knows', min_cardinality: 1, max_cardinality: null, exact_cardinality: null, some_values_from: null, all_values_from: null },
-                { property: 'foaf:age',   min_cardinality: null, max_cardinality: null, exact_cardinality: 1,  some_values_from: null, all_values_from: null },
-            ],
-            individuals: [
-                { uri: 'ex:John', label: 'John' },
-                { uri: 'ex:Jane', label: 'Jane' },
-            ],
-            individual_count: 2,
-        },
-        {
-            uri: 'foaf:Agent',
-            label: 'Agent',
-            prefix_form: 'foaf:Agent',
-            comment: 'An agent (person, group, software, etc.).',
-            parents: ['owl:Thing'],
-            children: ['foaf:Person', 'foaf:Organization'],
-            equivalent_classes: [],
-            disjoint_classes: [],
-            union_of: ['foaf:Person', 'foaf:Organization'],
-            intersection_of: [],
-            object_properties: [],
-            data_properties: [],
-            restrictions: [],
-            individuals: [],
-            individual_count: 0,
-        },
-    ]
+const stats = ref<OntologyFileStats>({
+    id: '', name: '', format: '', file_size: 0,
+    classes_count: 0, properties_count: 0, individuals_count: 0, uploaded_at: '',
 })
 
-const filteredClasses = computed(() =>
-    onto.value.classes.filter(c =>
-        c.label.toLowerCase().includes(search.value.toLowerCase()) ||
-        c.prefix_form.toLowerCase().includes(search.value.toLowerCase())
-    )
+async function fetchStats() {
+    try {
+        const { data, error } = await useFetch<OntologyFileStats>(
+            `${config.public.apiBase}/ontology/${id}/stats`
+        )
+        if (!error.value && data.value) stats.value = data.value
+    } catch (e) { console.error(e) }
+}
+
+const onto = ref<Ontology>({
+    id: "4c69459c-326c-4118-bec4-7042e2934762",
+    name: "filename",
+    format: "owl",
+    class_count: 5,
+    object_property_count: 0,
+    data_property_count: 0,
+    individual_count: 0,
+    nodes: [],
+    edges: []
+})
+
+
+async function fetchToVisualise() {
+    try {
+        const { data, error } = await useFetch<Ontology>(
+            `${config.public.apiBase}/ontology/${id}/owl`
+        )
+        if (!error.value && data.value) onto.value = data.value
+    } catch (e) { console.error(e) }
+}
+const activeOntologiesStore = useActiveOntologiesStore()
+
+const isActive = ref<Boolean>(
+    activeOntologiesStore.isActive(id)
 )
+
+
+function toggleActive() { 
+    if (isActive.value) {
+        activeOntologiesStore.removeOntology(id);
+        isActive.value = false
+    }else{
+        activeOntologiesStore.addOntology({
+            id: stats.value.id,
+            name: stats.value.name,
+            format: stats.value.format
+        })
+        isActive.value = true
+    }
+
+}
+
+
+const selectedNode = ref<any>(null)
+
+const graphContainer = ref<HTMLElement | null>(null)
+let cy: any = null
+
+const NODE_COLORS: Record<string, string> = {
+    root: '#6366f1',
+    class: '#818cf8',
+}
+const EDGE_COLORS: Record<string, string> = {
+    subClassOf: '#6366f1',
+    disjointWith: '#f43f5e',
+    equivalentClass: '#10b981',
+}
+
+function initCytoscape() {
+    if (!graphContainer.value) return
+
+    const elements = [
+        ...onto.value.nodes.map(n => ({
+            data: { id: n.id, label: n.label, nodeData: n },
+        })),
+        ...onto.value.edges.map((e, i) => ({
+            data: {
+                id: `e${i}`,
+                source: e.source,
+                target: e.target,
+                edgeType: e.type,
+            },
+        })),
+    ]
+
+    cy = cytoscape({
+        container: graphContainer.value,
+        elements,
+        style: [
+            {
+                selector: 'node',
+                style: {
+                    'background-color': (ele: any) =>
+                        NODE_COLORS[ele.data('nodeData').type] ?? '#818cf8',
+                    'label': 'data(label)',
+                    'color': '#e2e8f0',
+                    'font-size': '11px',
+                    'font-family': 'ui-monospace, monospace',
+                    'text-valign': 'center',
+                    'text-halign': 'center',
+                    'width': 'label',
+                    'height': 'label',
+                    'padding': '10px',
+                    'shape': 'roundrectangle',
+                    'border-width': 2,
+                    'border-color': '#4f46e5',
+                    'text-wrap': 'wrap',
+                    'text-max-width': '120px',
+                    'transition-property': 'background-color, border-color, border-width',
+                    'transition-duration': '150ms',
+                } as any,
+            },
+            {
+                selector: 'node:selected, node.highlighted',
+                style: {
+                    'background-color': '#4f46e5',
+                    'border-color': '#a5b4fc',
+                    'border-width': 3,
+                } as any,
+            },
+            {
+                selector: 'node[?nodeData.type = "root"]',
+                style: {
+                    'background-color': '#312e81',
+                    'border-color': '#6366f1',
+                } as any,
+            },
+            {
+                selector: 'edge',
+                style: {
+                    'width': 1.5,
+                    'line-color': (ele: any) => EDGE_COLORS[ele.data('edgeType')] ?? '#6366f1',
+                    'target-arrow-color': (ele: any) => EDGE_COLORS[ele.data('edgeType')] ?? '#6366f1',
+                    'target-arrow-shape': 'triangle',
+                    'curve-style': 'bezier',
+                    'opacity': 0.7,
+                    'label': 'data(edgeType)',
+                    'font-size': '9px',
+                    'color': '#94a3b8',
+                    'text-rotation': 'autorotate',
+                    'font-family': 'ui-monospace, monospace',
+                } as any,
+            },
+            {
+                selector: 'edge[edgeType = "disjointWith"]',
+                style: {
+                    'line-style': 'dashed',
+                    'line-dash-pattern': [4, 4],
+                } as any,
+            },
+            {
+                selector: 'edge[edgeType = "equivalentClass"]',
+                style: {
+                    'line-style': 'dotted',
+                    'target-arrow-shape': 'none',
+                    'source-arrow-shape': 'none',
+                } as any,
+            },
+        ],
+        layout: {
+            name: 'breadthfirst',
+            directed: true,
+            padding: 40,
+            spacingFactor: 1.6,
+            roots: ['owl:Thing'],
+        } as any,
+        userZoomingEnabled: true,
+        userPanningEnabled: true,
+        boxSelectionEnabled: false,
+    })
+
+    cy.on('tap', 'node', (evt: any) => {
+        const node = evt.target
+        cy.nodes().removeClass('highlighted')
+        node.addClass('highlighted')
+        // highlight connected edges
+        node.connectedEdges().style({ opacity: 1 })
+        cy.edges().not(node.connectedEdges()).style({ opacity: 0.2 })
+        selectedNode.value = node.data('nodeData')
+    })
+
+    cy.on('tap', (evt: any) => {
+        if (evt.target === cy) {
+            cy.nodes().removeClass('highlighted')
+            cy.edges().style({ opacity: 0.7 })
+            selectedNode.value = null
+        }
+    })
+}
+
+function fitGraph() { cy?.fit(undefined, 40) }
+function resetLayout() {
+    cy?.layout({
+        name: 'breadthfirst', directed: true, padding: 40,
+        spacingFactor: 1.6, roots: ['owl:Thing'],
+    } as any).run()
+    cy?.fit(undefined, 40)
+}
 
 function restrictionLabel(r: any): string {
     if (r.exact_cardinality !== null) return `exactly ${r.exact_cardinality}`
     const parts = []
     if (r.min_cardinality !== null) parts.push(`min ${r.min_cardinality}`)
     if (r.max_cardinality !== null) parts.push(`max ${r.max_cardinality}`)
-    if (r.some_values_from)         parts.push(`some values from ${r.some_values_from}`)
-    if (r.all_values_from)          parts.push(`all values from ${r.all_values_from}`)
+    if (r.some_values_from) parts.push(`some values from ${r.some_values_from}`)
+    if (r.all_values_from) parts.push(`all values from ${r.all_values_from}`)
     return parts.join(', ') || '—'
 }
+
+onMounted(async () => {
+    await fetchToVisualise()
+    await fetchStats()
+    await nextTick()
+    initCytoscape()
+})
+
+onBeforeUnmount(() => { cy?.destroy() })
+
+
 </script>
 
 <template>
     <div class="p-2 space-y-6">
 
+        <!-- Header -->
         <Card class="flex flex-row px-5 justify-between items-center">
             <div class="flex flex-col gap-0.5">
                 <CardTitle>{{ onto.name }}</CardTitle>
@@ -106,185 +251,157 @@ function restrictionLabel(r: any): string {
             </div>
         </Card>
 
-        <div class="grid grid-cols-4 gap-4">
-            <KpiCard title="Classes"           :data="String(onto.class_count)"           />
-            <KpiCard title="Object Properties" :data="String(onto.object_property_count)" />
-            <KpiCard title="Data Properties"   :data="String(onto.data_property_count)"   />
-            <KpiCard title="Individuals"       :data="String(onto.individual_count)"       />
+        <!-- KPIs -->
+        <div class="grid grid-cols-3 gap-4">
+            <KpiCard title="Classes" :data="stats.classes_count ?? 0" />
+            <KpiCard title="Properties" :data="stats.properties_count ?? 0" />
+            <KpiCard title="Individuals" :data="stats.individuals_count ?? 0" />
         </div>
 
+        <!-- Graph section -->
         <div class="flex items-center justify-between ml-1">
-            <p class="text-xl">Classes :</p>
-            <input
-                v-model="search"
-                placeholder="Search classes..."
-                class="text-sm border border-border rounded-lg px-3 py-1.5 w-56 bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-            />
+            <p class="text-xl">Class Hierarchy</p>
+            <div class="flex gap-2">
+                <!-- Legend -->
+                <div class="flex items-center gap-3 text-xs text-muted-foreground mr-2">
+                    <span class="flex items-center gap-1">
+                        <span class="w-4 h-0.5 bg-indigo-500 inline-block"></span> subClassOf
+                    </span>
+                    <span class="flex items-center gap-1">
+                        <span class="w-4 h-0.5 bg-rose-500 border-dashed border-b border-rose-500 inline-block"></span>
+                        disjointWith
+                    </span>
+                    <span class="flex items-center gap-1">
+                        <span class="w-4 h-0.5 bg-emerald-500 inline-block"></span> equivalentClass
+                    </span>
+                </div>
+                <Button size="sm" variant="outline" @click="fitGraph">Fit</Button>
+                <Button size="sm" variant="outline" @click="resetLayout">Reset Layout</Button>
+            </div>
         </div>
 
-        <div class="space-y-3">
-            <Card v-for="cls in filteredClasses" :key="cls.uri">
-                <Collapsible
-                    :open="openStates[cls.uri]"
-                    @update:open="toggleClass(cls.uri)"
-                    class="flex w-full flex-col gap-2"
-                >
-                    <CollapsibleTrigger as-child class="w-full cursor-pointer">
-                        <CardHeader class="w-full hover:bg-muted/50 transition-colors rounded-t-xl">
-                            <p class="flex w-full text-lg justify-between items-center">
-                                <span class="flex items-center gap-3">
-                                    <span class="w-2.5 h-2.5 rounded-full bg-indigo-400 shrink-0"></span>
-                                    {{ cls.prefix_form }}
-                                    <span class="flex gap-2 text-muted-foreground font-normal text-sm">
-                                        <span v-if="cls.children.length">
-                                            {{ cls.children.length }} child{{ cls.children.length > 1 ? 'ren' : '' }}
-                                        </span>
-                                        <span v-if="cls.individual_count">
-                                            {{ cls.individual_count }} individual{{ cls.individual_count > 1 ? 's' : '' }}
-                                        </span>
-                                        <span v-if="cls.restrictions.length">
-                                            {{ cls.restrictions.length }} restriction{{ cls.restrictions.length > 1 ? 's' : '' }}
-                                        </span>
-                                    </span>
-                                </span>
-                                <ChevronsUpDown class="w-4 h-4 text-muted-foreground" />
+        <!-- Graph + Detail panel -->
+        <div class="flex gap-4 items-start">
+
+            <!-- Cytoscape canvas -->
+            <Card class="flex-1 overflow-hidden" style="height: 520px;">
+                <div ref="graphContainer" class="w-full h-full" />
+            </Card>
+
+            <!-- Detail panel -->
+            <div class="w-80 shrink-0 transition-all duration-200">
+                <Card v-if="selectedNode" class="p-4 flex flex-col gap-4">
+
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-indigo-400 shrink-0"></span>
+                        <p class="font-semibold text-base leading-tight">{{ selectedNode.id }}</p>
+                    </div>
+
+                    <p v-if="selectedNode.comment" class="text-sm text-muted-foreground italic -mt-2">
+                        {{ selectedNode.comment }}
+                    </p>
+
+                    <div class="space-y-3">
+                        <div v-if="selectedNode.equivalent_classes?.length" class="flex flex-col gap-1">
+                            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Equivalent</p>
+                            <div class="flex flex-wrap gap-1">
+                                <Badge v-for="e in selectedNode.equivalent_classes" :key="e" variant="outline">{{ e }}
+                                </Badge>
+                            </div>
+                        </div>
+
+                        <div v-if="selectedNode.disjoint_classes?.length" class="flex flex-col gap-1">
+                            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Disjoint</p>
+                            <div class="flex flex-wrap gap-1">
+                                <Badge v-for="d in selectedNode.disjoint_classes" :key="d" variant="destructive">{{ d }}
+                                </Badge>
+                            </div>
+                        </div>
+
+                        <div v-if="selectedNode.union_of?.length" class="flex flex-col gap-1">
+                            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Union of</p>
+                            <div class="flex flex-wrap gap-1">
+                                <Badge v-for="u in selectedNode.union_of" :key="u" variant="secondary">{{ u }}</Badge>
+                            </div>
+                        </div>
+
+                        <div v-if="selectedNode.intersection_of?.length" class="flex flex-col gap-1">
+                            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Intersection of
                             </p>
-                        </CardHeader>
-                    </CollapsibleTrigger>
+                            <div class="flex flex-wrap gap-1">
+                                <Badge v-for="i in selectedNode.intersection_of" :key="i" variant="secondary">{{ i }}
+                                </Badge>
+                            </div>
+                        </div>
+                    </div>
 
-                    <CollapsibleContent>
-                        <CardContent class="flex flex-col gap-4 pt-0">
-                            <Card class="p-4 flex flex-col gap-5">
+                    <div v-if="selectedNode.object_properties?.length">
+                        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">Object
+                            Properties</p>
+                        <div class="space-y-1">
+                            <div v-for="p in selectedNode.object_properties" :key="p.label"
+                                class="flex items-center gap-2 bg-secondary rounded-md px-2.5 py-1">
+                                <span class="text-chart-1 font-medium text-xs">{{ p.label }}</span>
+                                <span class="text-primary text-xs">→</span>
+                                <span class="text-xs font-mono">{{ p.range ?? '—' }}</span>
+                            </div>
+                        </div>
+                    </div>
 
-                                <div v-if="cls.comment">
-                                    <p class="text-lg text-foreground">Comment</p>
-                                    <p class="text-sm text-muted-foreground mt-1 italic">{{ cls.comment }}</p>
-                                </div>
+                    <div v-if="selectedNode.data_properties?.length">
+                        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">Data
+                            Properties</p>
+                        <div class="space-y-1">
+                            <div v-for="p in selectedNode.data_properties" :key="p.label"
+                                class="flex items-center gap-2 bg-secondary rounded-md px-2.5 py-1">
+                                <span class="text-chart-2 font-medium text-xs">{{ p.label }}</span>
+                                <span class="text-primary text-xs">→</span>
+                                <span class="text-xs font-mono text-muted-foreground">{{ p.range ?? 'xsd:string'
+                                    }}</span>
+                            </div>
+                        </div>
+                    </div>
 
-                                <div class="grid grid-cols-2 gap-x-8 gap-y-3">
-                                    <div class="flex gap-2">
-                                        <span class="text-base w-28 shrink-0 text-muted-foreground">Parents :</span>
-                                        <div class="flex flex-wrap gap-1">
-                                            <Badge v-if="cls.parents.length" v-for="p in cls.parents" :key="p" variant="secondary">{{ p }}</Badge>
-                                            <span v-else class="text-sm text-muted-foreground">—</span>
-                                        </div>
-                                    </div>
+                    <div v-if="selectedNode.restrictions?.length">
+                        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">Restrictions
+                        </p>
+                        <div class="space-y-1">
+                            <div v-for="(r, i) in selectedNode.restrictions" :key="i"
+                                class="flex items-center gap-2 bg-secondary rounded-md px-2.5 py-1">
+                                <span class="text-chart-4 font-medium text-xs">{{ r.property }}</span>
+                                <span class="text-primary text-xs">·</span>
+                                <span class="text-xs text-muted-foreground">{{ restrictionLabel(r) }}</span>
+                            </div>
+                        </div>
+                    </div>
 
-                                    <div class="flex gap-2">
-                                        <span class="text-base w-28 shrink-0 text-muted-foreground">Children :</span>
-                                        <div class="flex flex-wrap gap-1">
-                                            <Badge v-if="cls.children.length" v-for="c in cls.children" :key="c" variant="secondary">{{ c }}</Badge>
-                                            <span v-else class="text-sm text-muted-foreground">—</span>
-                                        </div>
-                                    </div>
+                    <div v-if="selectedNode.individuals?.length">
+                        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
+                            Individuals
+                            <span class="normal-case font-normal">({{ selectedNode.individual_count }})</span>
+                        </p>
+                        <div class="flex flex-wrap gap-1">
+                            <Badge v-for="ind in selectedNode.individuals" :key="ind.uri" variant="secondary">
+                                {{ ind.label }}
+                            </Badge>
+                        </div>
+                    </div>
 
-                                    <div class="flex gap-2">
-                                        <span class="text-base w-28 shrink-0 text-muted-foreground">Equivalent :</span>
-                                        <div class="flex flex-wrap gap-1">
-                                            <Badge v-if="cls.equivalent_classes.length" v-for="e in cls.equivalent_classes" :key="e" variant="outline">{{ e }}</Badge>
-                                            <span v-else class="text-sm text-muted-foreground">—</span>
-                                        </div>
-                                    </div>
+                    <p v-if="!selectedNode.object_properties?.length && !selectedNode.data_properties?.length
+                        && !selectedNode.restrictions?.length && !selectedNode.individuals?.length
+                        && !selectedNode.equivalent_classes?.length && !selectedNode.disjoint_classes?.length"
+                        class="text-xs text-muted-foreground italic">
+                        No additional details for this class.
+                    </p>
+                </Card>
 
-                                    <div class="flex gap-2">
-                                        <span class="text-base w-28 shrink-0 text-muted-foreground">Disjoint :</span>
-                                        <div class="flex flex-wrap gap-1">
-                                            <Badge v-if="cls.disjoint_classes.length" v-for="d in cls.disjoint_classes" :key="d" variant="destructive">{{ d }}</Badge>
-                                            <span v-else class="text-sm text-muted-foreground">—</span>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex gap-2">
-                                        <span class="text-base w-28 shrink-0 text-muted-foreground">Union of :</span>
-                                        <div class="flex flex-wrap gap-1">
-                                            <Badge v-if="cls.union_of.length" v-for="u in cls.union_of" :key="u" variant="secondary">{{ u }}</Badge>
-                                            <span v-else class="text-sm text-muted-foreground">—</span>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex gap-2">
-                                        <span class="text-base w-28 shrink-0 text-muted-foreground">Intersection :</span>
-                                        <div class="flex flex-wrap gap-1">
-                                            <Badge v-if="cls.intersection_of.length" v-for="i in cls.intersection_of" :key="i" variant="secondary">{{ i }}</Badge>
-                                            <span v-else class="text-sm text-muted-foreground">—</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div v-if="cls.object_properties.length">
-                                    <p class="text-lg text-foreground mb-2">Object Properties</p>
-                                    <div class="space-y-1.5">
-                                        <div
-                                            v-for="p in cls.object_properties" :key="p.label"
-                                            class="flex items-center gap-2 bg-secondary rounded-lg px-3 py-1.5"
-                                        >
-                                            <span class="text-chart-1 font-medium text-sm">{{ p.label }}</span>
-                                            <span class="text-primary">→</span>
-                                            <span class="text-sm text-foreground font-mono">{{ p.range ?? '—' }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div v-if="cls.data_properties.length">
-                                    <p class="text-lg text-foreground mb-2">Data Properties</p>
-                                    <div class="space-y-1.5">
-                                        <div
-                                            v-for="p in cls.data_properties" :key="p.label"
-                                            class="flex items-center gap-2 bg-secondary rounded-lg px-3 py-1.5"
-                                        >
-                                            <span class="text-chart-2 font-medium text-sm">{{ p.label }}</span>
-                                            <span class="text-primary">→</span>
-                                            <span class="text-sm font-mono text-muted-foreground">{{ p.range ?? 'xsd:string' }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div v-if="cls.restrictions.length">
-                                    <p class="text-lg text-foreground mb-2">Restrictions</p>
-                                    <div class="space-y-1.5">
-                                        <div
-                                            v-for="(r, i) in cls.restrictions" :key="i"
-                                            class="flex items-center gap-2 bg-secondary rounded-lg px-3 py-1.5"
-                                        >
-                                            <span class="text-chart-4 font-medium text-sm">{{ r.property }}</span>
-                                            <span class="text-primary">·</span>
-                                            <span class="text-sm text-muted-foreground">{{ restrictionLabel(r) }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div v-if="cls.individuals.length">
-                                    <p class="text-lg text-foreground mb-2">
-                                        Individuals
-                                        <span class="text-sm text-muted-foreground font-normal ml-1">({{ cls.individual_count }})</span>
-                                    </p>
-                                    <div class="flex flex-wrap gap-1.5">
-                                        <Badge
-                                            v-for="ind in cls.individuals" :key="ind.uri"
-                                            variant="secondary"
-                                        >
-                                            {{ ind.label }}
-                                        </Badge>
-                                    </div>
-                                </div>
-
-                                <p
-                                    v-if="!cls.object_properties.length && !cls.data_properties.length && !cls.restrictions.length && !cls.individuals.length"
-                                    class="text-sm text-muted-foreground italic"
-                                >
-                                    No properties, restrictions or individuals defined for this class.
-                                </p>
-
-                            </Card>
-                        </CardContent>
-                    </CollapsibleContent>
-                </Collapsible>
-            </Card>
-
-            <Card v-if="filteredClasses.length === 0" class="py-12 text-center">
-                <p class="text-3xl mb-2">🔍</p>
-                <p class="text-sm text-muted-foreground">No classes match your search</p>
-            </Card>
+                <!-- Empty state -->
+                <Card v-else class="p-6 text-center flex flex-col items-center gap-2 border-dashed">
+                    <p class="text-2xl">🔍</p>
+                    <p class="text-sm text-muted-foreground">Click a node to inspect its details</p>
+                </Card>
+            </div>
         </div>
+
     </div>
 </template>
