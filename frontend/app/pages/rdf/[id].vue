@@ -89,7 +89,7 @@ function getFormattedDate(dateTimeStr: string): string {
                 </CardDescription>
             </CardHeader>
             <div class="space-x-2 flex items-center">
-                <NuxtLink :to="'/visualise/'+ stats.graph_id">
+                <NuxtLink :to="'/visualise/graph/'+ stats.graph_id">
                     <Button size="sm" variant="outline">
                         <Waypoints />
                         Visualise

@@ -19,7 +19,13 @@ export default defineNuxtConfig({
       tailwindcss(),
     ],
   },
-  modules: ['shadcn-nuxt', '@nuxtjs/color-mode', '@nuxt/fonts', 'nuxt-charts'],
+  modules: [
+    'shadcn-nuxt',
+    '@nuxtjs/color-mode',
+    '@nuxt/fonts',
+    'nuxt-charts',
+    '@pinia/nuxt',
+  ],
   colorMode: {
     classSuffix: ''
   },

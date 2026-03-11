@@ -1,6 +1,5 @@
 <script setup lang="ts">
 const route = useRoute()
-const id = route.params.id as string
 
 import cytoscape from 'cytoscape'
 import { Maximize2, RefreshCw, Settings, ZoomIn, ZoomOut } from 'lucide-vue-next'
