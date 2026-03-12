@@ -40,10 +40,12 @@ const detectedType = computed(() => {
 })
 
 function clearEditor() { clearState(); }
+
+
 </script>
 
 <template>
-  <div class="w-[50%] h-[98vh] overflow-auto flex flex-col gap-3 ">
+  <div class="w-full h-fit overflow-auto flex flex-col gap-3 ">
 
     <!-- Query Templat  es -->
 

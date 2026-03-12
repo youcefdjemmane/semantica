@@ -13,56 +13,58 @@ import cytoscape from 'cytoscape'
 
 const constructGraph = ref(null)
 let cyInstance = null
+
+
 watch(
-    () => results.value,
-    async (val) => {
-        if (val?.type !== 'CONSTRUCT') return
-        await nextTick()
-        if (!constructGraph.value) return
+    [() => results.value, constructGraph],
+    async ([val, container]) => {
+
+         if (val?.type !== 'CONSTRUCT') return
+        if (!container) return
 
         // destroy previous instance if any
         if (cyInstance) { cyInstance.destroy(); cyInstance = null }
 
         cyInstance = cytoscape({
             container: constructGraph.value,
-            elements:  val.elements,
+            elements: val.elements,
             style: [
                 {
                     selector: 'node[type = "uri"]',
                     style: {
-                        'background-color':  '#6366f1',
-                        'label':             'data(label)',
-                        'color':             '#fff',
-                        'font-size':         '10px',
-                        'text-valign':       'center',
-                        'text-halign':       'center',
-                        'width':             '60px',
-                        'height':            '60px',
+                        'background-color': '#6366f1',
+                        'label': 'data(label)',
+                        'color': '#fff',
+                        'font-size': '10px',
+                        'text-valign': 'center',
+                        'text-halign': 'center',
+                        'width': '60px',
+                        'height': '60px',
                     }
                 },
                 {
                     selector: 'node[type = "literal"]',
                     style: {
-                        'background-color':  '#f59e0b',
-                        'label':             'data(label)',
-                        'color':             '#fff',
-                        'font-size':         '9px',
-                        'text-valign':       'center',
-                        'shape':             'rectangle',
-                        'width':             '70px',
-                        'height':            '30px',
+                        'background-color': '#f59e0b',
+                        'label': 'data(label)',
+                        'color': '#fff',
+                        'font-size': '9px',
+                        'text-valign': 'center',
+                        'shape': 'rectangle',
+                        'width': '70px',
+                        'height': '30px',
                     }
                 },
                 {
                     selector: 'edge',
                     style: {
-                        'label':                  'data(label)',
-                        'curve-style':            'bezier',
-                        'target-arrow-shape':     'triangle',
-                        'font-size':              '8px',
-                        'line-color':             '#94a3b8',
-                        'target-arrow-color':     '#94a3b8',
-                        'text-background-color':  '#ffffff',
+                        'label': 'data(label)',
+                        'curve-style': 'bezier',
+                        'target-arrow-shape': 'triangle',
+                        'font-size': '8px',
+                        'line-color': '#94a3b8',
+                        'target-arrow-color': '#94a3b8',
+                        'text-background-color': '#ffffff',
                         'text-background-opacity': 1,
                         'text-background-padding': '2px',
                     }
@@ -76,7 +78,7 @@ watch(
 </script>
 
 <template>
-    <Card class="w-[50%] h-[98vh]    rounded-xl justify-between  flex flex-col overflow-hidden">
+    <Card class="w-full h-fit    rounded-xl justify-between  flex flex-col overflow-hidden">
 
         <!-- Results Header -->
         <CardHeader class="flex flex-row  items-center justify-between    ">
@@ -124,18 +126,25 @@ watch(
             <div v-if="results?.type === 'SELECT' && !running" class="overflow-x-auto w-full">
                 <table class="w-full text-sm">
                     <thead>
-                        <tr class="text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide border-b border-gray-200 dark:border-gray-800">
-                            <th v-for="v in results.vars" :key="v" class="pb-2 pr-4 font-medium whitespace-nowrap">?{{ v }}</th>
+                        <tr
+                            class="text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide border-b border-gray-200 dark:border-gray-800">
+                            <th v-for="v in results.vars" :key="v" class="pb-2 pr-4 font-medium whitespace-nowrap">?{{ v
+                                }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                        <tr v-for="(row, i) in results.rows" :key="i" class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                            <td v-for="v in results.vars" :key="v" class="py-2 pr-4 text-xs font-mono whitespace-nowrap">
-                                <span v-if="row[v] === undefined || row[v] === null" class="text-gray-400 dark:text-gray-600">—</span>
-                                <span v-else-if="String(row[v]).startsWith('http') || String(row[v]).startsWith('urn:')" class="text-blue-600 dark:text-blue-400">
+                        <tr v-for="(row, i) in results.rows" :key="i"
+                            class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                            <td v-for="v in results.vars" :key="v"
+                                class="py-2 pr-4 text-xs font-mono whitespace-nowrap">
+                                <span v-if="row[v] === undefined || row[v] === null"
+                                    class="text-gray-400 dark:text-gray-600">—</span>
+                                <span v-else-if="String(row[v]).startsWith('http') || String(row[v]).startsWith('urn:')"
+                                    class="text-blue-600 dark:text-blue-400">
                                     &lt;{{ row[v] }}&gt;
                                 </span>
-                                <span v-else-if="!isNaN(Number(row[v])) && String(row[v]).trim() !== ''" class="text-emerald-600 dark:text-emerald-400">
+                                <span v-else-if="!isNaN(Number(row[v])) && String(row[v]).trim() !== ''"
+                                    class="text-emerald-600 dark:text-emerald-400">
                                     {{ row[v] }}
                                 </span>
                                 <span v-else class="text-amber-600 dark:text-amber-400">
@@ -157,9 +166,10 @@ watch(
             </div>
 
             <!-- CONSTRUCT → Mini Cytoscape Graph -->
-            <div v-if="results?.type === 'CONSTRUCT' && !running" class="h-full flex flex-col gap-2">
+            <!-- CONSTRUCT → Mini Cytoscape Graph -->
+            <div v-if="results?.type === 'CONSTRUCT' && !running" class="flex flex-col gap-2" style="height: 500px">
                 <p class="text-xs text-gray-400">{{ results.triple_count }} triples constructed</p>
-                <div ref="constructGraph" class="flex-1 rounded-xl   "></div>
+                <div ref="constructGraph" class="flex-1 rounded-xl border"></div>
             </div>
 
         </CardContent>
