@@ -3,7 +3,7 @@ from datetime import datetime
 import uuid
 from sqlmodel import SQLModel, Field, Relationship
 from app.models.query_ontology import QueryOntology
-
+from pydantic import BaseModel
 if TYPE_CHECKING:
     from app.models.ontology import Ontology
     from app.models.rdf import Graph
@@ -26,3 +26,7 @@ class SparqlHistory(SQLModel, table=True):
 class SparqlQueryRequest(SQLModel):
     query: str
     graph_id: uuid.UUID
+
+
+class ConstructExportRequest(BaseModel):
+    triples: list[list[str]]

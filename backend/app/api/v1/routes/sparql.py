@@ -6,11 +6,11 @@ from fastapi.responses import FileResponse
 import csv
 import json
 import tempfile
-
+from pydantic import BaseModel
 from rdflib import Graph as RDFGraph
 
 from app.core.db import get_session
-from app.models.sparql import SparqlHistory, SparqlQueryRequest
+from app.models.sparql import SparqlHistory, SparqlQueryRequest,ConstructExportRequest
 from app.models.rdf import Graph
 
 router = APIRouter(prefix="/sparql", tags=["sparql"])
@@ -239,6 +239,41 @@ def export_result(
             filename="sparql_result.csv",
             media_type="text/csv"
         )
+
+
+
+@router.post("/export/construct")
+def export_construct(
+    data: ConstructExportRequest,
+    format: str = Query("json", enum=["json", "csv"])
+):
+    triples = data.triples
+
+    if format == "json":
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
+        with open(temp_file.name, "w", encoding="utf-8") as f:
+            json.dump(
+                [{"subject": t[0], "predicate": t[1], "object": t[2]} for t in triples],
+                f, indent=4
+            )
+        return FileResponse(
+            path=temp_file.name,
+            filename="construct_result.json",
+            media_type="application/json"
+        )
+
+    if format == "csv":
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
+        with open(temp_file.name, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(["subject", "predicate", "object"])
+            writer.writerows(triples)
+        return FileResponse(
+            path=temp_file.name,
+            filename="construct_result.csv",
+            media_type="text/csv"
+        )
+
 # ----------------------------
 # supprimer requête
 # ----------------------------
