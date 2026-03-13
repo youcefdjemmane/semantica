@@ -76,13 +76,11 @@ watchEffect(() => {
 
 <template>
     <div class="space-y-4 w-full">
-        <!-- Avertissement si pas de graphe -->
         <div v-if="!activeGraphId"
             class="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">
             ⚠️ Aucun graphe actif — les UPDATE nécessitent un graphe actif.
         </div>
 
-        <!-- Sélecteur de mode -->
         <div class="flex gap-2">
             <button
                 @click="mode = 'insert'"
@@ -108,7 +106,6 @@ watchEffect(() => {
             </button>
         </div>
 
-        <!-- Formulaire manuel -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
             <div class="flex flex-col gap-1">
                 <label class="text-xs font-medium text-muted-foreground">Sujet (URI)</label>
@@ -145,7 +142,6 @@ watchEffect(() => {
             </div>
         </div>
 
-        <!-- Boutons d'action -->
         <div class="flex flex-wrap gap-2">
             <Button
                 size="sm"
@@ -180,7 +176,6 @@ watchEffect(() => {
             </Button>
         </div>
 
-        <!-- Messages retour -->
         <p v-if="successMessage" class="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
             {{ successMessage }}
         </p>

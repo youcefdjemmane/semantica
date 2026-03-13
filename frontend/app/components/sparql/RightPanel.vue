@@ -12,7 +12,6 @@ function exportResults(format) {
 
 import cytoscape from 'cytoscape';
 
-// ─── View mode toggle ────────────────────────────────────────────────────────
 const viewMode = ref('table');
 
 watch(() => results.value, (val) => {
@@ -24,7 +23,6 @@ const showToggle = computed(() =>
     results.value?.type === 'SELECT' || results.value?.type === 'CONSTRUCT'
 );
 
-// ─── RDF-star indicator ──────────────────────────────────────────────────────
 const hasRdfStar = computed(() => {
     const r = results.value;
     if (!r) return false;
@@ -38,7 +36,6 @@ const hasRdfStar = computed(() => {
     return false;
 });
 
-// ─── Cytoscape ───────────────────────────────────────────────────────────────
 const graphContainer = ref(null);
 let cyInstance = null;
 const graphStats = ref({ nodes: 0, edges: 0 });
@@ -99,7 +96,6 @@ function buildSelectElements(rows, vars) {
     return elements;
 }
 
-// ─── Layout selector ─────────────────────────────────────────────────────────
 const selectedLayout = ref('cose');
 const layouts = [
     { value: 'cose',         label: 'Force-directed' },
@@ -236,18 +232,15 @@ function shortUri(val) {
 <template>
     <Card class="w-full h-fit rounded-xl justify-between flex flex-col overflow-hidden">
 
-        <!-- En-tête résultats -->
         <CardHeader class="flex flex-row items-center justify-between gap-2 flex-wrap">
             <div class="flex items-center gap-2">
                 <CardTitle>Résultats</CardTitle>
-                <!-- Badge RDF-star -->
                 <Badge v-if="hasRdfStar" variant="secondary" class="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
                     <Star class="w-3 h-3" /> RDF-star
                 </Badge>
             </div>
 
             <div class="flex items-center gap-2 flex-wrap">
-                <!-- Toggle Table / Graph -->
                 <div v-if="showToggle && !running"
                     class="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden text-xs">
                     <button
@@ -274,7 +267,6 @@ function shortUri(val) {
                     </button>
                 </div>
 
-                <!-- Boutons export (seulement pour SELECT/CONSTRUCT) -->
                 <template v-if="results && (results.type === 'SELECT' || results.type === 'CONSTRUCT')">
                     <Button @click="exportResults('json')" size="sm">
                         <Download /> JSON
@@ -289,10 +281,8 @@ function shortUri(val) {
             </div>
         </CardHeader>
 
-        <!-- Corps des résultats -->
         <CardContent class="overflow-auto w-full h-full p-2 flex flex-col gap-3">
 
-            <!-- État vide -->
             <div v-if="!results && !updateResult && !running && !error"
                 class="h-full flex flex-col items-center justify-center text-gray-300">
                 <p class="text-4xl mb-3">🔍</p>
@@ -300,19 +290,16 @@ function shortUri(val) {
                 <p class="text-xs mt-1">Ctrl+Enter pour lancer</p>
             </div>
 
-            <!-- Chargement -->
             <div v-if="running" class="h-full flex-col flex items-center justify-center">
                 <Settings class="animate-spin" />
                 <p class="text-sm">Exécution en cours…</p>
             </div>
 
-            <!-- Erreur -->
             <div v-if="error" class="h-full flex-col flex items-center justify-center">
                 <p class="text-sm font-semibold text-red-600 mb-1">Erreur de requête</p>
                 <p class="text-xs text-red-500 font-mono whitespace-pre-wrap">{{ error }}</p>
             </div>
 
-            <!-- ── Résultat UPDATE ── -->
             <div v-if="updateResult && !running"
                 class="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950 p-4 flex flex-col gap-3">
                 <div class="flex items-center gap-2">
@@ -339,7 +326,6 @@ function shortUri(val) {
                 </div>
             </div>
 
-            <!-- ── SELECT → Table ── -->
             <div v-if="results?.type === 'SELECT' && !running && viewMode === 'table'" class="overflow-x-auto w-full">
                 <table class="w-full text-sm">
                     <thead>
@@ -366,14 +352,12 @@ function shortUri(val) {
                 </table>
             </div>
 
-            <!-- ── ASK → Booléen ── -->
             <div v-if="results?.type === 'ASK' && !running" class="h-full">
                 <p class="text-2xl font-bold" :class="results.result === 'TRUE' ? 'text-green-600' : 'text-red-500'">
                     {{ results.result }}
                 </p>
             </div>
 
-            <!-- ── CONSTRUCT → Table ── -->
             <div v-if="results?.type === 'CONSTRUCT' && !running && viewMode === 'table'" class="overflow-x-auto w-full">
                 <table class="w-full text-sm">
                     <thead>
@@ -385,13 +369,13 @@ function shortUri(val) {
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                         <tr v-for="(triple, i) in results.rawTriples" :key="i" class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                            <td class="py-1.5 pr-4 text-xs font-mono max-w-[220px] truncate">
+                            <td class="py-1.5 pr-4 text-xs font-mono max-w-55 truncate">
                                 <span class="text-blue-600 dark:text-blue-400" :title="triple[0]">&lt;{{ shortUri(triple[0]) }}&gt;</span>
                             </td>
-                            <td class="py-1.5 pr-4 text-xs font-mono max-w-[180px] truncate">
+                            <td class="py-1.5 pr-4 text-xs font-mono max-w-45 truncate">
                                 <span class="text-violet-600 dark:text-violet-400" :title="triple[1]">{{ shortUri(triple[1]) }}</span>
                             </td>
-                            <td class="py-1.5 pr-4 text-xs font-mono max-w-[220px] truncate">
+                            <td class="py-1.5 pr-4 text-xs font-mono max-w-55 truncate">
                                 <span v-if="String(triple[2]).startsWith('http') || String(triple[2]).startsWith('urn:')"
                                     class="text-blue-600 dark:text-blue-400" :title="triple[2]">&lt;{{ shortUri(triple[2]) }}&gt;</span>
                                 <span v-else class="text-amber-600 dark:text-amber-400" :title="triple[2]">"{{ triple[2] }}"</span>
@@ -401,14 +385,12 @@ function shortUri(val) {
                 </table>
             </div>
 
-            <!-- ── SELECT / CONSTRUCT → Graphe (Cytoscape) ── -->
             <div
                 v-if="!running && results && viewMode === 'graph' && (results.type === 'SELECT' || results.type === 'CONSTRUCT')"
                 
                 style="min-height: 520px;"
                 class="overflow-x-auto w-full"
             >
-                <!-- Légende -->
                 <div class="flex items-center gap-4 px-1 shrink-0">
                     <div class="flex items-center gap-1.5">
                         <span class="w-3 h-3 rounded-full bg-indigo-500 inline-block"></span>
@@ -424,17 +406,15 @@ function shortUri(val) {
                     </div>
                 </div>
 
-                <!-- Canvas graphe -->
                 <div class="rounded-xl border overflow-hidden relative" style="height: 480px; width: 100%;">
 
-                    <!-- Contrôles en overlay -->
                     <div class="absolute top-2 right-2 z-10 flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-xl border px-3 py-2 shadow-sm">
                         <template v-if="hasCyInstance">
                             <Badge variant="secondary">{{ graphStats.nodes }} nœuds</Badge>
                             <Badge variant="secondary">{{ graphStats.edges }} arêtes</Badge>
                         </template>
                         <Select v-model="selectedLayout" @update:model-value="applyLayout">
-                            <SelectTrigger class="w-[140px] h-7 text-xs">
+                            <SelectTrigger class="w-35 h-7 text-xs">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -463,7 +443,6 @@ function shortUri(val) {
                 </div>
             </div>
 
-            <!-- ── Métriques de performance ── -->
             <PerformanceMetrics />
 
         </CardContent>

@@ -1,5 +1,4 @@
 <script setup>
-// Affiche les métriques de performance après exécution d'une requête SPARQL
 import { Clock, Database, Rows, Zap } from 'lucide-vue-next';
 import { useSparqlState } from '~/composables/useSparql';
 
@@ -58,7 +57,6 @@ const speedLabel = computed(() => {
     <div v-if="metrics"
         class="flex flex-wrap items-center gap-3 px-3 py-2 rounded-lg border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-xs">
 
-        <!-- Vitesse globale -->
         <div class="flex items-center gap-1.5">
             <Zap class="w-3.5 h-3.5" :class="speedClass" />
             <span class="font-semibold" :class="speedClass">{{ speedLabel }}</span>
@@ -66,25 +64,21 @@ const speedLabel = computed(() => {
 
         <span class="w-px h-4 bg-gray-200 dark:bg-gray-700" />
 
-        <!-- Temps d'exécution -->
         <div class="flex items-center gap-1.5 text-muted-foreground">
             <Clock class="w-3.5 h-3.5" />
             <span>Temps : <strong :class="speedClass">{{ metrics.execution_time }} ms</strong></span>
         </div>
 
-        <!-- Nombre de résultats (SELECT / CONSTRUCT) -->
         <div v-if="metrics.result_count !== null" class="flex items-center gap-1.5 text-muted-foreground">
             <Rows class="w-3.5 h-3.5" />
             <span>Résultats : <strong class="text-foreground">{{ metrics.result_count }}</strong></span>
         </div>
 
-        <!-- Taille du graphe -->
         <div v-if="metrics.graph_size > 0" class="flex items-center gap-1.5 text-muted-foreground">
             <Database class="w-3.5 h-3.5" />
             <span>Graphe : <strong class="text-foreground">{{ metrics.graph_size }} triplets</strong></span>
         </div>
 
-        <!-- UPDATE stats -->
         <template v-if="metrics.type === 'UPDATE'">
             <span class="w-px h-4 bg-gray-200 dark:bg-gray-700" />
             <span class="text-emerald-600 dark:text-emerald-400 font-medium">
