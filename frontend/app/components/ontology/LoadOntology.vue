@@ -16,17 +16,20 @@ const config = useRuntimeConfig()
 const loadFile = async () => {
 
     if (!file.value || file_name.value == '') {
-        error.value = 'All fileds must be set'
+        error.value = 'All fields must be set'
     } else {
         try {
             const form = new FormData();
             form.append('name', file_name.value)
             form.append('file', file.value)
-            const response = await useFetch(`${config.public.apiBase}/rdf/upload`, {
+            const response = await $fetch(`${config.public.apiBase}/ontology/upload`, {
                 method: 'POST',
                 body: form
             });
             emit('uploaded')
+            file_name.value = ''
+            file.value = null
+            error.value = ''
         } catch (err) {
             emit('error')
         }

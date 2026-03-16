@@ -112,18 +112,35 @@ def _compute_ontology_details(
             session.add(db_prop)
 
     # ── Individuals (OWL only) ────────────────────────────────────────
+    found_inds = {}
     if onto_type == "owl":
-        for ind in g.subjects(RDF.type, OWL.NamedIndividual):
-            if isinstance(ind, BNode):
-                continue
-            rdf_type = g.value(ind, RDF.type)
+        for c in class_uris:
+            for i in g.subjects(RDF.type, c):
+                if not isinstance(i, BNode):
+                    if i not in found_inds: found_inds[i] = set()
+                    found_inds[i].add(c)
+        for i in g.subjects(RDF.type, OWL.NamedIndividual):
+            if not isinstance(i, BNode):
+                if i not in found_inds: found_inds[i] = set()
+                for t in g.objects(i, RDF.type):
+                    if t != OWL.NamedIndividual and not isinstance(t, BNode):
+                        found_inds[i].add(t)
+
+        for ind, types in found_inds.items():
+            best_type = None
+            onto_types = [t for t in types if t in class_uris]
+            if onto_types:
+                best_type = onto_types[0]
+            elif types:
+                best_type = list(types)[0]
+
             prop_count = len(list(g.predicate_objects(ind)))
             db_ind = Individual(
                 ontology_id    = db_onto.id,
                 uri            = str(ind),
                 label          = safe_label(g, ind),
                 prefix_form    = safe_qname(g, ind),
-                rdf_type       = safe_qname(g, rdf_type) if rdf_type else None,
+                rdf_type       = safe_qname(g, best_type) if best_type else None,
                 property_count = prop_count,
             )
             session.add(db_ind)
@@ -134,7 +151,7 @@ def _compute_ontology_details(
         len(list(g.subjects(RDF.type, OWL.ObjectProperty))) +
         len(list(g.subjects(RDF.type, OWL.DatatypeProperty)))
     )
-    db_onto.individuals_count = len(list(g.subjects(RDF.type, OWL.NamedIndividual))) if onto_type == "owl" else 0
+    db_onto.individuals_count = len(found_inds) if onto_type == "owl" else 0
 
     session.add(db_onto)
     session.commit()
