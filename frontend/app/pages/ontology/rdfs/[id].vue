@@ -1,10 +1,27 @@
 <script setup lang="ts">
 import KpiCard from '~/components/KpiCard.vue'
 import { ChevronsUpDown } from 'lucide-vue-next'
+import { useActiveOntologiesStore } from '~/store/active_ontology'
 
-const isActive = ref(false)
-function toggleActive() {
-    isActive.value = !isActive.value
+const config = useRuntimeConfig()
+const id = useRoute().params.id
+
+const activeOntologiesStore = useActiveOntologiesStore()
+const isActive = ref<Boolean>(activeOntologiesStore.isActive(id))
+
+function toggleActive() { 
+    if (isActive.value) {
+        activeOntologiesStore.removeOntology(id);
+        isActive.value = false
+    }else{
+        activeOntologiesStore.addOntology({
+            id: onto.value.id,
+            name: onto.value.name,
+            format: onto.value.format
+        })
+        isActive.value = true
+    }
+
 }
 
 const openStates = ref<Record<string, boolean>>({})
@@ -15,56 +32,34 @@ function toggleClass(uri: string) {
 const search = ref('')
 
 const onto = ref({
-    name: 'schema.rdfs',
-    file: 'schema.rdfs',
-    class_count: 3,
-    property_count: 6,
-    namespace_count: 4,
-    classes: [
-        {
-            uri: 'schema:Person',
-            label: 'Person',
-            prefix_form: 'schema:Person',
-            comment: 'A person (alive, dead, undead, or fictional).',
-            parents: ['schema:Thing'],
-            children: ['schema:Patient'],
-            properties: [
-                { label: 'name',      range: 'xsd:string'  },
-                { label: 'birthDate', range: 'xsd:date'    },
-                { label: 'email',     range: 'xsd:string'  },
-                { label: 'knows',     range: 'schema:Person' },
-            ]
-        },
-        {
-            uri: 'schema:Organization',
-            label: 'Organization',
-            prefix_form: 'schema:Organization',
-            comment: 'An organization such as a school, NGO, corporation, club, etc.',
-            parents: ['schema:Thing'],
-            children: [],
-            properties: [
-                { label: 'name',   range: 'xsd:string' },
-                { label: 'member', range: 'schema:Person' },
-            ]
-        },
-        {
-            uri: 'schema:Thing',
-            label: 'Thing',
-            prefix_form: 'schema:Thing',
-            comment: 'The most generic type of item.',
-            parents: [],
-            children: ['schema:Person', 'schema:Organization'],
-            properties: [
-                { label: 'description', range: 'xsd:string' },
-            ]
-        },
-    ]
+    id: '',
+    name: 'Loading...',
+    format: 'rdfs',
+    class_count: 0,
+    property_count: 0,
+    namespace_count: 0,
+    classes: [] as any[]
 })
+
+async function fetchToVisualise() {
+    try {
+        const data: any = await $fetch(
+            `${config.public.apiBase}/ontology/${id}/rdfs`
+        )
+        if (data) onto.value = data
+    } catch (e) { console.error(e) }
+}
+
+onMounted(async () => {
+    await fetchToVisualise()
+})
+
 
 const filteredClasses = computed(() =>
     onto.value.classes.filter(c =>
-        c.label.toLowerCase().includes(search.value.toLowerCase()) ||
-        c.prefix_form.toLowerCase().includes(search.value.toLowerCase())
+        c.label?.toLowerCase().includes(search.value.toLowerCase()) ||
+        c.prefix_form?.toLowerCase().includes(search.value.toLowerCase()) || 
+        c.uri?.toLowerCase().includes(search.value.toLowerCase())
     )
 )
 

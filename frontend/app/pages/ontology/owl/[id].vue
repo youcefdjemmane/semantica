@@ -14,10 +14,10 @@ const stats = ref<OntologyFileStats>({
 
 async function fetchStats() {
     try {
-        const { data, error } = await useFetch<OntologyFileStats>(
+        const data = await $fetch<OntologyFileStats>(
             `${config.public.apiBase}/ontology/${id}/stats`
         )
-        if (!error.value && data.value) stats.value = data.value
+        if (data) stats.value = data
     } catch (e) { console.error(e) }
 }
 
@@ -36,10 +36,10 @@ const onto = ref<Ontology>({
 
 async function fetchToVisualise() {
     try {
-        const { data, error } = await useFetch<Ontology>(
+        const data = await $fetch<Ontology>(
             `${config.public.apiBase}/ontology/${id}/owl`
         )
-        if (!error.value && data.value) onto.value = data.value
+        if (data) onto.value = data
     } catch (e) { console.error(e) }
 }
 const activeOntologiesStore = useActiveOntologiesStore()

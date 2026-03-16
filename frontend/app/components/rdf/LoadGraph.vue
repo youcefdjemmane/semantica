@@ -27,6 +27,9 @@ const loadFile = async () => {
             body: form
         })
         emit('uploaded')
+        file_name.value = ''
+        file.value = null
+        error.value = ''
     } catch (err) {
         error.value = 'Upload failed'
         emit('error')

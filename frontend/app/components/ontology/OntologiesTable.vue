@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { CirclePlus, ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight, ChartNoAxesColumn, Eye, Trash } from 'lucide-vue-next'
 import LoadOntology from './LoadOntology.vue'
 import DeleteOntology from './DeleteOntology.vue'
+import { toast } from 'vue-sonner'
 
 const props = defineProps({
     ontologies: {
