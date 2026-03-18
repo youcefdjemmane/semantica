@@ -17,6 +17,37 @@ from app.models.rdf import Graph
 router = APIRouter(prefix="/sparql", tags=["sparql"])
 
 
+# Statistiques SPARQL globales
+@router.get("/stats")
+def get_sparql_stats(session: Session = Depends(get_session)):
+    """Retourne les statistiques globales SPARQL: total, types, dernière requête."""
+    all_queries = session.exec(select(SparqlHistory)).all()
+    total = len(all_queries)
+
+    type_counts: dict[str, int] = {}
+    for q in all_queries:
+        type_counts[q.query_type] = type_counts.get(q.query_type, 0) + 1
+
+    # Dernière requête exécutée
+    last_query = session.exec(
+        select(SparqlHistory).order_by(SparqlHistory.executed_at.desc()).limit(1)
+    ).first()
+
+    last_info = None
+    if last_query:
+        last_info = {
+            "query_type":    last_query.query_type,
+            "executed_at":   last_query.executed_at.isoformat(),
+            "query_snippet": last_query.query[:80] + ("..." if len(last_query.query) > 80 else ""),
+        }
+
+    return {
+        "total_queries": total,
+        "by_type":       type_counts,
+        "last_query":    last_info,
+    }
+
+
 # récupérer les requêtes récentes
 @router.get("/recent", response_model=List[SparqlHistory])
 def get_recent_queries(session: Session = Depends(get_session)):

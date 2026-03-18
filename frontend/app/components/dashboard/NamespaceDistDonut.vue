@@ -1,45 +1,40 @@
 <script setup lang="ts">
-
 import { Doughnut } from 'vue-chartjs'
-import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, RadialLinearScale, ArcElement } from 'chart.js'
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale,RadialLinearScale,ArcElement, LinearScale)
+import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement } from 'chart.js'
+ChartJS.register(Title, Tooltip, Legend, ArcElement)
 
-import { TrendingUp } from "lucide-vue-next"
+import { useDashboard } from '~/composables/useDashboard';
+import { computed } from 'vue';
 
+const { metrics } = useDashboard();
 
-const chartData = {
-  labels: ['Subjects', 'Predicates', 'Objects'],
-  datasets: [
-    {
-      label: 'Visitors',
-      data: [4300, 3800, 2400],
+const chartData = computed(() => {
+  const ns = metrics.value?.namespaces ?? [];
+  const colors = [
+    '#ff2159', '#1549e6', '#ff9900', '#22c55e', '#a855f7',
+    '#06b6d4', '#f43f5e', '#f97316',
+  ];
+  return {
+    labels: ns.map(n => n.prefix),
+    datasets: [{
+      label: 'Predicates',
+      data: ns.map(n => n.count),
       borderColor: '#fff',
-      borderWidth:0,
-      backgroundColor: [
-        '#ff2159',
-        '#1549e6',
-        '#ff9900',
-      ],
-    },
-  ],
-}
+      borderWidth: 0,
+      backgroundColor: colors.slice(0, ns.length),
+    }],
+  };
+});
+
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
-
-  cutout: '65%', // 🔥 controls inner hole size (default ~50%)
-
+  cutout: '65%',
   plugins: {
-    legend: {
-      display: false, // remove legend
-    },
-    tooltip: {
-      enabled: true,
-    },
+    legend: { display: false },
+    tooltip: { enabled: true },
   },
 }
-
-
 </script>
 
 <template>
@@ -51,12 +46,8 @@ const chartOptions = {
       <Doughnut :options="chartOptions" :data="chartData" />
     </CardContent>
     <CardFooter class="flex-col gap-2 text-sm">
-      <div class="flex items-center gap-2 font-medium leading-none">
-        Trending up by 5.2% this month
-        <TrendingUp class="h-4 w-4" />
-      </div>
-      <div class="leading-none text-muted-foreground">
-        Showing total visitors for the last 6 months
+      <div class="leading-none text-muted-foreground text-center text-xs">
+        {{ metrics?.namespaces?.length ?? 0 }} namespaces detected
       </div>
     </CardFooter>
   </Card>

@@ -1,15 +1,20 @@
-<script setup>
+<script setup lang="ts">
 import { Codemirror } from 'vue-codemirror'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { keymap } from '@codemirror/view'
 import { defaultKeymap } from '@codemirror/commands'
 import { autocompletion, CompletionContext } from '@codemirror/autocomplete'
-import { Eraser, Play, CircleDot, TriangleAlert, Star } from 'lucide-vue-next'
+import { Eraser, Play, CircleDot, TriangleAlert, Star, Database } from 'lucide-vue-next'
 import { sparql } from 'codemirror-lang-sparql';
 import { useSparqlState, useSparqlActions } from '~/composables/useSparql';
+import { useActiveGraphStore } from '~/store/active_graph';
+import { useRuntimeConfig } from '#app';
+import { ref } from 'vue';
 
 const { query, activeGraphId, activeGraphName, schema } = useSparqlState();
 const { runQuery, clearState, fetchHistory, fetchSchema } = useSparqlActions();
+const activeGraphStore = useActiveGraphStore();
+const availableGraphs = ref<any[]>([]);
 
 const SPARQL_KEYWORDS = [
   'SELECT','DISTINCT','REDUCED','WHERE','FILTER','OPTIONAL','UNION','GRAPH',
@@ -74,11 +79,30 @@ function shortenURI(uri) {
 }
 
 onMounted(async () => {
+  const config = useRuntimeConfig();
+  const apiBase = config.public.apiBase || 'http://localhost:8000/api/v1';
+  try {
+     const res = await fetch(`${apiBase}/rdf/files`);
+     if (res.ok) availableGraphs.value = await res.json();
+  } catch (e) {
+     console.error("Failed to load graphs", e);
+  }
+
   await fetchHistory();
   if (activeGraphId.value) {
     await fetchSchema(activeGraphId.value);
   }
 });
+
+function onGraphSelect(event: any) {
+  const selectElement = event.target as HTMLSelectElement;
+  const id = selectElement.value;
+  if (!id) return;
+  const g = availableGraphs.value.find(x => x.id === id);
+  if (g) {
+      activeGraphStore.setGraph({ id: g.id, name: g.name || g.file_name });
+  }
+}
 
 watch(activeGraphId, async (id) => {
   if (id) await fetchSchema(id);
@@ -119,23 +143,37 @@ function clearEditor() { clearState(); }
 <template>
   <div class="w-full flex flex-col gap-3">
 
-    <div v-if="activeGraphId"
-        class="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 text-sm">
-        <CircleDot class="w-3.5 h-3.5 text-green-500 shrink-0" />
-        <span class="text-green-700 dark:text-green-300 font-medium truncate">
-            Graphe actif : {{ activeGraphName }}
-        </span>
-    </div>
-    <div v-else
-        class="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 text-sm">
-        <TriangleAlert class="w-3.5 h-3.5 text-amber-500 shrink-0" />
-        <span class="text-amber-700 dark:text-amber-300">
-            Aucun graphe actif —
-            <NuxtLink to="/rdf" class="underline font-medium">Activer un graphe</NuxtLink>
-        </span>
+    <div class="flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm">
+        <div class="flex items-center gap-2">
+            <template v-if="activeGraphId">
+                <CircleDot class="w-3.5 h-3.5 text-green-500 shrink-0" />
+                <span class="text-green-700 dark:text-green-300 font-medium truncate">
+                    Graphe actif : {{ activeGraphName }}
+                </span>
+            </template>
+            <template v-else>
+                <div class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></div>
+                <span class="text-slate-600 dark:text-slate-400 font-medium">
+                    Aucun graphe actif
+                </span>
+            </template>
+        </div>
+
+        <div class="shrink-0">
+            <select
+                class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs rounded px-2 py-1 outline-none max-w-[200px]"
+                @change="onGraphSelect"
+                :value="activeGraphId || ''"
+            >
+                <option value="" disabled>─ Sélectionner un graphe ─</option>
+                <option v-for="g in availableGraphs" :key="g.id" :value="g.id">
+                    {{ g.name || g.file_name }}
+                </option>
+            </select>
+        </div>
     </div>
 
-    <Card class="flex flex-col h-112.5">
+    <Card class="flex flex-col min-h-[450px]">
       <CardHeader class="flex flex-row justify-between items-center py-3">
         <CardTitle>Query Editor</CardTitle>
         <div class="flex items-center gap-2 flex-wrap">
