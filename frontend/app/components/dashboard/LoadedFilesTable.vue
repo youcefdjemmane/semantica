@@ -26,7 +26,8 @@ function viewFile(file: LoadedFile) {
     if (file.type === 'RDF') {
         router.push(`/rdf/${file.id}`);
     } else {
-        router.push(`/ontology/${file.id}`);
+        const format = file.format?.toLowerCase() || 'owl';
+        router.push(`/ontology/${format}/${file.id}`);
     }
 }
 </script>
