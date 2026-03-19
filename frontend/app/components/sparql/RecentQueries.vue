@@ -15,7 +15,7 @@ const { loadFromHistory } = useSparqlActions();
     <CardContent>
       <Table>
         <TableBody>
-          <TableRow v-for="h in history.slice(0,5)" :key="h.id || h.query">
+          <TableRow v-for="h in history.slice(0,10)" :key="h.id || h.query">
             <TableCell>
               <Badge :variant="mapQueryToVariant(h.query_type)">{{ h.query_type }}</Badge>
             </TableCell>
