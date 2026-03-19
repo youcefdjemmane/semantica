@@ -11,6 +11,8 @@ import ExportResults from '~/components/dashboard/ExportResults.vue';
 import SparqlStatsCard from '~/components/dashboard/SparqlStatsCard.vue';
 import GraphSizeBar from '~/components/dashboard/GraphSizeBar.vue';
 import ActivityTimeline from '~/components/dashboard/ActivityTimeline.vue';
+import SmartInsights from '~/components/dashboard/SmartInsights.vue';
+import GraphHealthScore from '~/components/dashboard/GraphHealthScore.vue';
 
 import { useDashboard } from '~/composables/useDashboard';
 import { computed, onMounted } from 'vue';
@@ -45,6 +47,16 @@ const totalOntologies= computed(() => ontologyStats.value?.total_ontologies ?? '
             <KpiCard title="Predicates"     :data="totalPredicates" footer="unique" />
             <KpiCard title="Objects"        :data="totalObjects"    footer="unique" />
             <KpiCard title="Ontologies"     :data="totalOntologies" footer="loaded" />
+        </div>
+
+        <!-- ROW 1.5 — Copilot and Health Score -->
+        <div class="grid grid-cols-5 gap-4">
+            <div class="col-span-3">
+                <SmartInsights />
+            </div>
+            <div class="col-span-2">
+                <GraphHealthScore />
+            </div>
         </div>
 
         <!-- ROW 2 — Charts -->
