@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { ArrowRight, CirclePlay } from 'lucide-vue-next';
 import { useDashboard } from '~/composables/useDashboard';
+import { useReasoningStore } from '~/store/reasoning';
 import { computed } from 'vue';
 
-const { sparqlStats, metrics } = useDashboard();
+const { sparqlStats } = useDashboard();
+const reasoningStore = useReasoningStore();
 
-const inferredCount = computed(() => metrics.value?.kpis?.total_triples ?? 0);
+const statusText = computed(() => reasoningStore.isEnabled ? 'Active' : 'Inactive');
+const statusColor = computed(() => reasoningStore.isEnabled ? 'text-green-500' : 'text-gray-400');
+
 </script>
 
 <template>
@@ -13,16 +17,18 @@ const inferredCount = computed(() => metrics.value?.kpis?.total_triples ?? 0);
         <CardHeader>Reasoning Engine</CardHeader>
         <CardContent class="space-y-2">
             <div class="flex justify-between text-sm">
-                <span class="text-gray-500">Status</span>
-                <span class="font-medium text-green-500">Active</span>
+                <span class="text-gray-500">Global Status</span>
+                <span class="font-medium" :class="statusColor">{{ statusText }}</span>
             </div>
             <div class="flex justify-between text-sm">
                 <span class="text-gray-500">Formalism</span>
-                <span class="font-medium text-blue-400">RDFS / OWL 2 RL</span>
+                <span class="font-medium text-blue-400">{{ reasoningStore.activeFormalism }}</span>
             </div>
             <div class="flex justify-between text-sm">
                 <span class="text-gray-500">Inferred Triples</span>
-                <span class="font-medium text-gray-800 dark:text-gray-100">0</span>
+                <span class="font-medium text-gray-800 dark:text-gray-100">
+                    {{ reasoningStore.isEnabled ? reasoningStore.inferredCount : '—' }}
+                </span>
             </div>
             <div class="flex justify-between text-sm">
                 <span class="text-gray-500">SPARQL Queries Run</span>
@@ -35,7 +41,7 @@ const inferredCount = computed(() => metrics.value?.kpis?.total_triples ?? 0);
             <NuxtLink to="/reasoning">
                 <Button>
                     <CirclePlay />
-                    Run Reasoning
+                    {{ reasoningStore.isEnabled ? 'Run Reasoning' : 'Enable Reasoning' }}
                 </Button>
             </NuxtLink>
             <NuxtLink to="/reasoning">

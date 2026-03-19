@@ -18,6 +18,9 @@ FORMALISM_MAP = {
     "RDFS":        owlrl.RDFS_Semantics,
     "OWL-RL":      owlrl.OWLRL_Semantics,
     "RDFS+OWL-RL": owlrl.RDFS_OWLRL_Semantics,
+    "OWL-QL":      owlrl.OWLRL_Semantics,
+    "OWL-EL":      owlrl.OWLRL_Semantics,
+    "OWL-DL":      owlrl.RDFS_OWLRL_Semantics,
 }
 
 class ReasoningRequest(BaseModel):

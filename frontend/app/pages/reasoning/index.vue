@@ -3,12 +3,18 @@ import { Settings, Play, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import KpiCard from '~/components/KpiCard.vue'
 import { useActiveGraphStore } from '~/store/active_graph'
 import { useActiveOntologiesStore } from '~/store/active_ontology'
+import { useReasoningStore } from '~/store/reasoning'
 
 definePageMeta({ title: 'Reasoning' })
 
 const activeGraphStore = useActiveGraphStore()
 const activeOntologiesStore = useActiveOntologiesStore()
-const formalism = ref('RDFS')
+const reasoningStore = useReasoningStore()
+
+const formalism = computed({
+    get: () => reasoningStore.activeFormalism,
+    set: (val) => reasoningStore.setFormalism(val)
+})
 const running = ref(false)
 const error = ref<string | null>(null)
 const results = ref<any | null>(null)
@@ -33,12 +39,26 @@ const formalisms = [
         description: 'Lightweight inference optimized for fast SPARQL querying over large datasets.',
         color: 'bg-amber-50 text-amber-600 border-amber-200',
     },
+    {
+        value: 'OWL-EL',
+        label: 'OWL-EL',
+        description: 'Polynomial time reasoning for ontologies with large number of classes/properties.',
+        color: 'bg-emerald-50 text-emerald-600 border-emerald-200',
+    },
+    {
+        value: 'OWL-DL',
+        label: 'OWL-DL',
+        description: 'Maximum expressivity while maintaining computational completeness and decidability.',
+        color: 'bg-purple-50 text-purple-600 border-purple-200',
+    },
 ]
 
 const formalismColor: Record<string, string> = {
     'RDFS': 'bg-blue-50 text-blue-600',
     'OWL-RL': 'bg-indigo-50 text-indigo-600',
     'OWL-QL': 'bg-amber-50 text-amber-600',
+    'OWL-EL': 'bg-emerald-50 text-emerald-600',
+    'OWL-DL': 'bg-purple-50 text-purple-600',
 }
 
 function toggleSubject(subject: string) {
@@ -69,6 +89,7 @@ async function runReasoning() {
             }
         })
         results.value = data
+        reasoningStore.setInferredCount(data.inferred_count)
     } catch (err: any) {
         error.value = err?.data?.detail ?? 'Reasoning failed. Check your graph and ontologies.'
     } finally {
@@ -87,20 +108,30 @@ async function runReasoning() {
                     Apply deductive reasoning to infer new triples
                 </p>
             </div>
-            <div class="flex items-center gap-2">
-                <Badge :variant="activeGraphStore.id ? 'default' : 'destructive'">
-                    {{ activeGraphStore.id ? `Graph active` : 'No active graph' }}
-                </Badge>
-                <Badge variant="secondary">
-                    {{ activeOntologiesStore.getOntologiesIds.length }} ontolog{{
-                        activeOntologiesStore.getOntologiesIds.length === 1 ? 'y' : 'ies' }}
-                </Badge>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 border-r pr-4 border-border">
+                    <span class="text-sm font-medium transition-colors" :class="reasoningStore.isEnabled ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'">
+                        {{ reasoningStore.isEnabled ? 'Reasoning Active' : 'Reasoning Inactive' }}
+                    </span>
+                    <Button :variant="reasoningStore.isEnabled ? 'default' : 'outline'" size="sm" @click="reasoningStore.toggleEnabled()">
+                        {{ reasoningStore.isEnabled ? 'Disable' : 'Enable' }}
+                    </Button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <Badge :variant="activeGraphStore.id ? 'default' : 'destructive'">
+                        {{ activeGraphStore.id ? `Graph active` : 'No active graph' }}
+                    </Badge>
+                    <Badge variant="secondary">
+                        {{ activeOntologiesStore.getOntologiesIds.length }} ontolog{{
+                            activeOntologiesStore.getOntologiesIds.length === 1 ? 'y' : 'ies' }}
+                    </Badge>
+                </div>
             </div>
         </Card>
 
         <div class="space-y-2">
             <p class="text-xl ml-1">Formalism :</p>
-            <div class="grid grid-cols-3 gap-3">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
                 <Card v-for="f in formalisms" :key="f.value" class="p-4 cursor-pointer transition-all"
                     :class="formalism === f.value ? 'border-primary' : 'border-transparent hover:border-secondary'"
                     @click="formalism = f.value">
