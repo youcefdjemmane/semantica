@@ -15,10 +15,12 @@ def get_depth(g: rdflib.Graph, cls, depth=0, visited=None) -> int:
     if cls in visited:
         return depth
     visited.add(cls)
-    parent = g.value(cls, RDFS.subClassOf)
-    if not parent or parent == cls:
+    
+    parents = [p for p in g.objects(cls, RDFS.subClassOf) if not isinstance(p, BNode) and p != cls]
+    if not parents:
         return depth
-    return get_depth(g, parent, depth + 1, visited)
+        
+    return max([get_depth(g, p, depth + 1, visited.copy()) for p in parents])
 
 
 def _detect_ontology_type(g: rdflib.Graph) -> str:
@@ -43,6 +45,7 @@ def _compute_ontology_details(
     class_uris = set()
     if onto_type == "owl":
         class_uris = {c for c in g.subjects(RDF.type, OWL.Class) if not isinstance(c, BNode)}
+        class_uris.update({c for c in g.subjects(RDF.type, RDFS.Class) if not isinstance(c, BNode)})
     else:
         class_uris = {c for c in g.subjects(RDF.type, RDFS.Class) if not isinstance(c, BNode)}
 
@@ -77,6 +80,7 @@ def _compute_ontology_details(
             (OWL.ObjectProperty,    "owl:ObjectProperty"),
             (OWL.DatatypeProperty,  "owl:DatatypeProperty"),
             (OWL.AnnotationProperty,"owl:AnnotationProperty"),
+            (RDF.Property,          "rdf:Property"),
         ]
         for prop_type, type_label in prop_types:
             for prop in g.subjects(RDF.type, prop_type):

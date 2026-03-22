@@ -265,7 +265,7 @@ def get_owl_detail(onto_id: uuid.UUID, session: Session = Depends(get_session)):
         # subClassOf edges (excluding restriction BNodes)
         parents = [
             p for p in g.objects(cls_uri, RDFS.subClassOf)
-            if not isinstance(p, BNode)
+            if not isinstance(p, BNode) and p != cls_uri
         ]
         if parents:
             for parent in parents:
@@ -342,8 +342,11 @@ def get_rdfs_detail(onto_id: uuid.UUID, session: Session = Depends(get_session))
             "uri":         cls_db.uri,
             "label":       cls_db.label,
             "prefix_form": cls_db.prefix_form,
-            "comment":     str(comment) if comment else None,
-            "parents":     [cls_db.parent_uri] if cls_db.parent_uri else [],
+            "parent_uri":  cls_db.parent_uri,
+            "parents":     [
+                safe_qname(g, p) for p in g.objects(cls_uri, RDFS.subClassOf)
+                if not isinstance(p, BNode) and p != cls_uri
+            ],
             "children":    [
                 safe_qname(g, c) for c in g.subjects(RDFS.subClassOf, cls_uri)
                 if not isinstance(c, BNode)

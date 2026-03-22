@@ -1,56 +1,45 @@
 <script setup lang="ts">
-
 import { PolarArea } from 'vue-chartjs'
-import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, RadialLinearScale, ArcElement } from 'chart.js'
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale,RadialLinearScale,ArcElement, LinearScale)
+import { Chart as ChartJS, Title, Tooltip, Legend, RadialLinearScale, ArcElement } from 'chart.js'
+ChartJS.register(Title, Tooltip, Legend, RadialLinearScale, ArcElement)
 
-import { TrendingUp } from "lucide-vue-next"
+import { useDashboard } from '~/composables/useDashboard';
+import { computed } from 'vue';
 
+const { metrics } = useDashboard();
 
-const chartData = {
-  labels: ['Subjects', 'Predicates', 'Objects'],
-  datasets: [
-    {
-      label: 'Visitors',
-      data: [4300, 3800, 2400],
+const chartData = computed(() => {
+  const kpis = metrics.value?.kpis;
+  const s = kpis?.total_subjects   ?? 0;
+  const p = kpis?.total_predicates ?? 0;
+  const o = kpis?.total_objects    ?? 0;
+  return {
+    labels: ['Subjects', 'Predicates', 'Objects'],
+    datasets: [{
+      label: 'Count',
+      data: [s, p, o],
       borderColor: '#fff',
-      borderWidth:0,
-      backgroundColor: [
-        '#ff2159',
-        '#1549e6',
-        '#ff9900',
-      ],
-    },
-  ],
-}
+      borderWidth: 0,
+      backgroundColor: ['#ff2159', '#1549e6', '#ff9900'],
+    }],
+  };
+});
+
 const chartOptions = {
   responsive: true,
-  maintainAspectRatio: false, // 🔥 allows full height usage
-  
+  maintainAspectRatio: false,
   plugins: {
-    legend: {
-      display: false, // ❌ remove legend
-    },
-    tooltip: {
-      enabled: true, // keep tooltips if you want
-    },
+    legend: { display: false },
+    tooltip: { enabled: true },
   },
   scales: {
     r: {
-      pointLabels: {
-        display: false, // ❌ remove Chrome/Safari/etc labels
-      },
-      ticks: {
-        display: false, // ❌ remove radial numbers
-      },
-      grid: {
-        display: false, // optional: remove circular grid
-      },
+      pointLabels: { display: false },
+      ticks: { display: false },
+      grid: { display: false },
     },
   },
 }
-
-
 </script>
 
 <template>
@@ -62,12 +51,10 @@ const chartOptions = {
       <PolarArea :options="chartOptions" :data="chartData" />
     </CardContent>
     <CardFooter class="flex-col gap-2 text-sm">
-      <div class="flex items-center gap-2 font-medium leading-none">
-        Trending up by 5.2% this month
-        <TrendingUp class="h-4 w-4" />
-      </div>
-      <div class="leading-none text-muted-foreground">
-        Showing total visitors for the last 6 months
+      <div class="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+        <span class="flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-[#ff2159]"></span>Subjects</span>
+        <span class="flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-[#1549e6]"></span>Predicates</span>
+        <span class="flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-[#ff9900]"></span>Objects</span>
       </div>
     </CardFooter>
   </Card>
