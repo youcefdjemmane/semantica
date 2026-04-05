@@ -18,6 +18,7 @@ class Graph(SQLModel, table=True):
     file_size: int                  = Field(nullable=False)
     triples_count: int              = Field(nullable=False, default=0)
     uploaded_at: datetime           = Field(nullable=False, default_factory=datetime.utcnow)
+    graph_type: str                 = Field(default="RDF", nullable=False)
 
     subjects:       List["Subject"]       = Relationship(back_populates="graph", cascade_delete=True)
     predicates:     List["Predicate"]     = Relationship(back_populates="graph", cascade_delete=True)

@@ -133,6 +133,7 @@ def get_file_stats(file_id: uuid.UUID, session: Session = Depends(get_session)):
         "graph_id":        str(graph.id),
         "name":            graph.name,
         "format":          graph.format,
+        "graph_type":      graph.graph_type,
         "file_size":       graph.file_size,
         "triples_count":   graph.triples_count,
         "uploaded_at":     graph.uploaded_at,
@@ -162,6 +163,7 @@ def delete_file(file_id: uuid.UUID, session: Session = Depends(get_session)):
 @router.post("/upload")
 async def upload_graph(
     name: str         = Form(...),
+    graph_type: str   = Form("RDF"),
     file: UploadFile  = File(...),
     session: Session  = Depends(get_session),
 ):
@@ -187,6 +189,7 @@ async def upload_graph(
     db_graph = Graph(
         name=name,
         format=rdf_format,
+        graph_type=graph_type,
         file_name=file.filename,
         file_path=str(dest_path),
         file_size=len(content),
@@ -202,6 +205,7 @@ async def upload_graph(
         "id":            str(db_graph.id),
         "name":          db_graph.name,
         "format":        db_graph.format,
+        "graph_type":    db_graph.graph_type,
         "file_name":     db_graph.file_name,
         "file_size":     db_graph.file_size,
         "triples_count": db_graph.triples_count,
