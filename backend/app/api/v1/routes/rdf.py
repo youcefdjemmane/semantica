@@ -172,6 +172,26 @@ async def upload_graph(
         raise HTTPException(status_code=400, detail="Uploaded file is empty.")
 
     rdf_format = _detect_rdf_format(file.filename, file.content_type)
+    
+    # Auto-detection and preprocessing de RDF-star
+    try:
+        content_str = content.decode("utf-8")
+        if "<<" in content_str and ">>" in content_str:
+            import re
+            import urllib.parse
+            def replacer(match):
+                inner = match.group(1).strip()
+                encoded = urllib.parse.quote(inner)
+                return f"<urn:rdf-star:{encoded}>"
+            
+            prev_content = ""
+            while "<<" in content_str and ">>" in content_str and content_str != prev_content:
+                prev_content = content_str
+                content_str = re.sub(r'<<\s*((?:(?!<<|>>).)*?)\s*>>', replacer, content_str, flags=re.DOTALL)
+                
+            content = content_str.encode("utf-8")
+    except Exception:
+        pass # Ignorer les erreurs de décodage binaire
 
     rdf_graph = rdflib.ConjunctiveGraph()
     try:

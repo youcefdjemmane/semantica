@@ -35,6 +35,7 @@ class Subject(SQLModel, table=True):
     prefix_form: Optional[str] = Field(default=None, nullable=True)
     rdf_type: Optional[str]    = Field(default=None, nullable=True)
     predicate_count: int       = Field(default=0)
+    is_star: bool              = Field(default=False)
 
     graph: Optional[Graph]     = Relationship(back_populates="subjects")
 
@@ -64,6 +65,7 @@ class Object(SQLModel, table=True):
     datatype: Optional[str]    = Field(default=None, nullable=True)
     language: Optional[str]    = Field(default=None, nullable=True)
     referenced_by: int         = Field(default=0)
+    is_star: bool              = Field(default=False)
 
     graph: Optional[Graph]     = Relationship(back_populates="objects")
 
