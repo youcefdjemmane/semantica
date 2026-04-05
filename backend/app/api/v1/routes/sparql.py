@@ -146,38 +146,78 @@ def _add_reification_in_memory(g: RDFGraph) -> None:
             pass
 
 
-# fonction interne pour exécuter SPARQL
-def execute_sparql(query: str, graph_path: str):
-
+# Universal SPARQL executor
+def execute_sparql(query: str, graph_path: str) -> dict:
+    """
+    Handles SELECT, ASK, DESCRIBE, CONSTRUCT + SPARQL-star + FILTER/BIND/OPTIONAL etc.
+    Returns: { type, boolean, headers, rows, graph_ttl }
+    """
     g = RDFGraph()
     g.parse(graph_path)
 
-    # If RDF-star query: add reification in memory then preprocess query
+    # SPARQL-star: inject reification in-memory, then rewrite query
     if "<<" in query and ">>" in query:
         _add_reification_in_memory(g)
         query = preprocess_sparql_star(query)
 
+    # Detect query type: strip comments / PREFIX / BASE, then find the first keyword
+    def _detect_type(q: str) -> str:
+        # Remove comments
+        cleaned = re.sub(r'#[^\n]*', '', q)
+        # Remove PREFIX and BASE declarations (can be multiline)
+        cleaned = re.sub(r'(?i)\b(PREFIX|BASE)\s+\S+\s*<[^>]*>', '', cleaned)
+        cleaned = cleaned.strip()
+        # Match the first SPARQL keyword
+        m = re.match(r'(?i)\s*(ASK|DESCRIBE|CONSTRUCT|SELECT)\b', cleaned)
+        if m:
+            return m.group(1).upper()
+        return "SELECT"
+
+    q_type = _detect_type(query)
+
     try:
         results = g.query(query)
     except Exception as exc:
-        from fastapi import HTTPException
         raise HTTPException(status_code=400, detail=f"SPARQL error: {exc}")
 
-    data = []
-    for row in results:
-        decoded_row = []
-        for x in row:
-            val = str(x) if x is not None else ""
-            if val.startswith("urn:rdf-star:"):
-                raw = urllib.parse.unquote(val[len("urn:rdf-star:"):])
-                val = f"<< {raw} >>"
-            decoded_row.append(val)
-        data.append(decoded_row)
+    def decode_val(v) -> str:
+        if v is None:
+            return ""
+        val = str(v)
+        if val.startswith("urn:rdf-star:"):
+            return f"<< {urllib.parse.unquote(val[len('urn:rdf-star:'):])} >>"
+        return val
 
-    return data
+    try:
+        if q_type == "ASK":
+            return {"type": "ASK", "boolean": bool(results), "headers": [], "rows": [], "graph_ttl": None}
+
+        if q_type in ("DESCRIBE", "CONSTRUCT"):
+            result_graph = RDFGraph()
+            for ns_p, ns_u in g.namespaces():
+                result_graph.bind(ns_p, ns_u)
+            triples = []
+            for triple in results:
+                if isinstance(triple, tuple) and len(triple) == 3:
+                    s, p, o = triple
+                    result_graph.add((s, p, o))
+                    triples.append([decode_val(s), decode_val(p), decode_val(o)])
+            ttl = result_graph.serialize(format="turtle")
+            return {"type": q_type, "boolean": None, "headers": ["subject", "predicate", "object"], "rows": triples, "graph_ttl": ttl}
+
+        # SELECT (FILTER, BIND, OPTIONAL, GROUP BY, HAVING, etc. are natively handled by RDFLib)
+        vars_list = getattr(results, "vars", None) or []
+        headers = [str(v) for v in vars_list]
+        rows = [[decode_val(v) for v in row] for row in results]
+        return {"type": "SELECT", "boolean": None, "headers": headers, "rows": rows, "graph_ttl": None}
+
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"SPARQL error: {exc}")
 
 
-# SELECT
+# ─── Universal query endpoint ───────────────────────────────────────────────
+
+# SELECT (kept for backward compat - delegates to universal executor)
 @router.post("/select")
 def run_select(
     data: SparqlQueryRequest,
@@ -198,14 +238,15 @@ def run_select(
 
     history = SparqlHistory(
         query=data.query,
-        query_type="SELECT",
+        query_type=result["type"],
         graph_id=data.graph_id
     )
-
     session.add(history)
     session.commit()
 
-    return {"result": result}
+    return result
+
+
 
 
 # ASK
